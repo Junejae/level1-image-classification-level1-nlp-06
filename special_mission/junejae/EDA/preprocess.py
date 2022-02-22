@@ -28,7 +28,7 @@ def preprocessFunction():
             elif "normal" in f_name:
                 mask = 2
 
-            gender = gender = 0 if data_info.iloc[i].gender == "male" else 1
+            gender = 0 if data_info.iloc[i].gender == "male" else 1
 
             age = min(2, data_info.iloc[i].age // 30)
 
