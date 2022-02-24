@@ -3,7 +3,7 @@ from torchvision import transforms
 import pandas as pd
 import numpy as np
 
-class MyDataset(Dataset):
+class TrainDataset(Dataset):
     # input: image_list, target_list
     def __init__(self, X, y, transform=None):
         self.image_paths = X
