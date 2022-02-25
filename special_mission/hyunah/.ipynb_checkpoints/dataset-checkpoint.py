@@ -1,7 +1,14 @@
 from torch.utils.data import Dataset, DataLoader
-from torchvision import transforms
-import pandas as pd
-import numpy as np
+from PIL import Image
+
+
+def convert_to_dataloader(dataset, BATCH_SIZE, IsShuffle):
+    return DataLoader(
+        dataset,
+        batch_size = BATCH_SIZE,
+        shuffle=IsShuffle
+    )
+
 
 class TrainDataset(Dataset):
     # input: image_list, target_list
@@ -21,3 +28,19 @@ class TrainDataset(Dataset):
     
     def __len__(self):
         return len(self.image_paths)
+
+
+class TestDataset(Dataset):
+    def __init__(self, img_paths, transform):
+        self.img_paths = img_paths
+        self.transform = transform
+
+    def __getitem__(self, index):
+        image = Image.open(self.img_paths[index])
+
+        if self.transform:
+            image = self.transform(image)
+        return image
+
+    def __len__(self):
+        return len(self.img_paths)
