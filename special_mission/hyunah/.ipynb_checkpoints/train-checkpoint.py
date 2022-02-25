@@ -22,19 +22,23 @@ def train(data_loader, model, loss_fn, optm, EPOCH):
     model.train()
     for epoch in range(EPOCH):
         # image shape : [8, 3, 512, 384]
+        targets = []
+        all_preds = []
         for i, (imgs, labels) in enumerate(data_loader):
             imgs = Variable(imgs).to(device)
             labels = Variable(labels).to(device)
 
             y_pred = model(imgs)
             loss = loss_fn(y_pred, labels)
-
+            targets.extend(labels.cpu().numpy())
+            all_preds.extend(y_pred.argmax(dim=-1).detach().cpu().numpy())
+            
             optm.zero_grad()
             loss.backward()
             optm.step()
 
             if i % 100 == 0:
-                print("epoch: {} Loss: {:.4f}".format(epoch, loss.data))
+                print("epoch: {} Loss: {:.4f} Acc: {:.4f}".format(epoch, loss.data, accuracy_score(targets, all_preds)))
     print('done!')
     
     
