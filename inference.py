@@ -21,7 +21,7 @@ def load_model(saved_model, num_classes, device):
     # tar.extractall(path=saved_model)
 
     model_path = os.path.join(saved_model, 'best.pth')
-    model.load_state_dict(torch.load(model_path, map_location=device), strict=False)
+    model.load_state_dict(torch.load(model_path, map_location=device))
 
     return model
 
@@ -71,8 +71,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
 
     # Data and model checkpoints directories
-    parser.add_argument('--batch_size', type=int, default=1000, help='input batch size for validing (default: 1000)')
-    parser.add_argument('--resize', type=tuple, default=(96, 128), help='resize size for image when you trained (default: (96, 128))')
+    parser.add_argument('--batch_size', type=int, default=8, help='input batch size for validing (default: 1000)')
+    parser.add_argument('--resize', type=tuple, default=(384, 512), help='resize size for image when you trained (default: (96, 128))')
     parser.add_argument('--model', type=str, default='BaseModel', help='model type (default: BaseModel)')
 
     # Container environment

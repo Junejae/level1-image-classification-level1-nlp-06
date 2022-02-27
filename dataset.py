@@ -8,7 +8,11 @@ import numpy as np
 import torch
 from PIL import Image
 from torch.utils.data import Dataset, Subset, random_split
-from torchvision.transforms import Resize, ToTensor, Normalize, Compose, CenterCrop, ColorJitter
+from torchvision.transforms import Resize, ToTensor, Normalize, Compose, CenterCrop, ColorJitter, RandomPerspective, RandomHorizontalFlip
+# customize
+from glob import glob
+import pandas as pd
+from sklearn.model_selection import train_test_split, ShuffleSplit
 
 IMG_EXTENSIONS = [
     ".jpg", ".JPG", ".jpeg", ".JPEG", ".png",
@@ -311,3 +315,121 @@ class TestDataset(Dataset):
 
     def __len__(self):
         return len(self.img_paths)
+
+
+class JuneCustomDataset(Dataset):
+    def __init__(self, data_dir, mean=(0.548, 0.504, 0.479), std=(0.237, 0.247, 0.246), val_ratio=0.2, ):
+        self.data_dir = data_dir
+        self.mean = mean
+        self.std = std
+        self.val_ratio = val_ratio
+        self.num_classes = 18
+
+        self.data_info = self.preprocessedData(self.data_dir) # preprocessFunction()
+        self.img_paths = self.data_info.img_path.tolist()
+        self.transform = None
+        self.transform_june = JuneCustomAug(self.mean, self.std)
+        self.label_arr = self.data_info.label.tolist()
+
+        self.data_len = len(self.data_info.img_path)
+        
+    def set_transform(self, transform):
+        self.transform = transform
+
+    def __getitem__(self, index):
+        image = Image.open(self.img_paths[index])
+        label = self.label_arr[index]
+
+        if self.transform:
+            if label % 3 == 2:
+                image = self.transform_june(image)
+            else:
+                image = self.transform(image)
+
+        return image, label
+
+    def __len__(self):
+        return self.data_len
+
+    # split in my way
+    def split_dataset(self) -> Tuple[Subset, Subset]:
+        sss = ShuffleSplit(n_splits=1, test_size=self.val_ratio)
+        
+        train_index, val_index = [], []
+
+        for t, v in sss.split(range(self.data_len)):
+            train_index = t
+            val_index = v
+       
+        return Subset(self, train_index), Subset(self, val_index)
+
+    # re-labeling process
+    def preprocessedData(self, train_dir):
+        prepro_data_info = pd.DataFrame(columns={'id','img_path','race','mask','gender','age','label'})
+
+        all_id, all_path, all_race, all_mask, all_age, all_gender, all_label = [],[],[],[],[],[],[]
+
+        for absolute_path in glob(train_dir + "/*/*"):
+
+            split_list = absolute_path.split("/")
+            img_name = split_list[-1]
+            img_path = split_list[-2]
+
+            path_split = img_path.split("_")
+
+            img_id = path_split[0]
+            img_gender = 0 if path_split[1] == "male" else 1
+            img_race = path_split[2]
+            img_age = min(2, int(path_split[3]) // 30)
+
+            img_mask = 0
+            if 'incorrect' in img_name:
+                img_mask = 1
+            elif 'normal' in img_name:
+                img_mask = 2
+
+            n = 8 if img_age == 2 else 1
+            for _ in range(n):
+                all_id.append(img_id)
+                all_path.append(absolute_path)
+                all_race.append(img_race)
+                all_mask.append(img_mask)
+                all_gender.append(img_gender)
+                all_age.append(img_age)
+                all_label.append(img_mask*6 + img_gender*3 + img_age)
+            
+
+        prepro_data_info['id'] = all_id
+        prepro_data_info['img_path'] = all_path
+        prepro_data_info['race'] = all_race
+        prepro_data_info['mask'] = all_mask
+        prepro_data_info['gender'] = all_gender
+        prepro_data_info['age'] = all_age
+        prepro_data_info['label'] = all_label
+        
+        return prepro_data_info
+
+class JuneCustomAug:
+    def __init__(self, mean, std, resize=[512, 384], **args):
+        self.transform = Compose([
+            Resize(resize, Image.BILINEAR),
+            RandomPerspective(distortion_scale=0.2, p=0.8), 
+            RandomHorizontalFlip(p=0.5),
+            ToTensor(),
+            Normalize(mean=mean, std=std),
+        ])
+
+    def __call__(self, image):
+        return self.transform(image)
+
+class JuneCustomAug2:
+    def __init__(self, mean, std, resize=[512, 384], **args):
+        self.transform = Compose([
+            Resize(resize, Image.BILINEAR),
+            RandomHorizontalFlip(p=0.5),
+            ToTensor(),
+            Normalize(mean=mean, std=std),
+        ])
+
+    def __call__(self, image):
+        return self.transform(image)
