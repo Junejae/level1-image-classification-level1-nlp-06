@@ -143,7 +143,7 @@ def train(data_dir, model_dir, args):
         lr=args.lr,
         weight_decay=5e-4
     )
-    scheduler = StepLR(optimizer, args.lr_decay_step, gamma=0.1)
+    scheduler = StepLR(optimizer, args.lr_decay_step, gamma=1)
 
     # -- logging
     
@@ -153,13 +153,14 @@ def train(data_dir, model_dir, args):
     
 
     # Setup WandB
-    import wandb
-    wandb.init(project="Junejae-Experiment", entity="boostcamp-nlp06", name="resnet50+mlp+dataAug")
+    
+    """     import wandb
+    wandb.init(project="Junejae-Experiment", entity="boostcamp-nlp06", name="resnet50+fc+dataAug")
     wandb.config = {
         "learning_rate": args.lr,
         "epochs": args.epochs,
         "batch_size": args.batch_size
-        }
+        } """
 
     best_val_acc = 0
     best_val_loss = np.inf
@@ -199,10 +200,10 @@ def train(data_dir, model_dir, args):
                 loss_value = 0
                 matches = 0
 
-            wandb.log({"loss": loss})
+            """ wandb.log({"loss": loss})
 
             # Optional
-            wandb.watch(model)
+            wandb.watch(model) """
 
         scheduler.step()
 

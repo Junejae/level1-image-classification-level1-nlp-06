@@ -388,6 +388,28 @@ class JuneCustomDataset(Dataset):
             elif 'normal' in img_name:
                 img_mask = 2
 
+            # -- 결측치 교정 시작
+            # -- Swap Gender
+            if img_id in ['000225','000664','000767','001498-1','001509','003113','003223','004281','004432','005223','006359',
+                    '006360','006361','006362','006363','006364','006424','000667','000725','000736','000817','003780','006504']:
+                temp = 0 if img_gender == 1 else 1
+                img_gender = temp
+            
+            # -- Change Age to ~29
+            if img_id in ['001009','001064','001637','001666','001852']:
+                img_age = 0
+            
+            # -- Change Age to 60~
+            if img_id in ['004348']: # 고민거리, 이분은 액면가는 폭삭 늙으셨지만 59세로 찍혀 있는데 과연 이걸 60대 노인 취급해도 될지 안 될지...
+                img_age = 2
+
+            # -- Correct Mask Status, normal <-> incorrect
+            if img_id in ['000020','004418','005227']:
+                if img_mask != 0:
+                    temp = 1 if img_mask == 2 else 2
+                    img_mask = temp
+            # -- 결측치 교정 끝
+
             n = 8 if img_age == 2 else 1
             for _ in range(n):
                 all_id.append(img_id)
