@@ -8,11 +8,11 @@ import numpy as np
 import torch
 from PIL import Image
 from torch.utils.data import Dataset, Subset, random_split
-from torchvision.transforms import Resize, ToTensor, Normalize, Compose, CenterCrop, ColorJitter, RandomPerspective, RandomHorizontalFlip
+from torchvision.transforms import Resize, ToTensor, Normalize, Compose, CenterCrop, ColorJitter, RandomPerspective, RandomHorizontalFlip, RandomRotation
 # customize
 from glob import glob
 import pandas as pd
-from sklearn.model_selection import train_test_split, ShuffleSplit
+from sklearn.model_selection import train_test_split, ShuffleSplit, StratifiedKFold
 
 IMG_EXTENSIONS = [
     ".jpg", ".JPG", ".jpeg", ".JPEG", ".png",
@@ -341,10 +341,12 @@ class JuneCustomDataset(Dataset):
         label = self.label_arr[index]
 
         if self.transform:
-            if label % 3 == 2:
+            """ if label % 3 == 2:
                 image = self.transform_june(image)
             else:
-                image = self.transform(image)
+                image = self.transform(image) """
+
+            image = self.transform(image)
 
         return image, label
 
@@ -410,7 +412,9 @@ class JuneCustomDataset(Dataset):
                     img_mask = temp
             # -- 결측치 교정 끝
 
-            n = 8 if img_age == 2 else 1
+            # oversampling
+            # n = 16 if img_age == 2 else 1
+            n = 1
             for _ in range(n):
                 all_id.append(img_id)
                 all_path.append(absolute_path)
@@ -448,6 +452,20 @@ class JuneCustomAug2:
     def __init__(self, mean, std, resize=[512, 384], **args):
         self.transform = Compose([
             Resize(resize, Image.BILINEAR),
+            RandomHorizontalFlip(p=0.5),
+            ToTensor(),
+            Normalize(mean=mean, std=std),
+        ])
+
+    def __call__(self, image):
+        return self.transform(image)
+
+class JuneCustomAug3:
+    def __init__(self, mean, std, resize=[512, 384], **args):
+        self.transform = Compose([
+            Resize(resize, Image.BILINEAR),
+            RandomPerspective(distortion_scale=0.2, p=0.8),
+            RandomRotation(degrees=20),
             RandomHorizontalFlip(p=0.5),
             ToTensor(),
             Normalize(mean=mean, std=std),

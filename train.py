@@ -18,6 +18,9 @@ from torch.utils.tensorboard import SummaryWriter
 from dataset import MaskBaseDataset
 from loss import create_criterion
 
+# Custom
+import wandb
+
 
 def seed_everything(seed):
     torch.manual_seed(seed)
@@ -114,7 +117,7 @@ def train(data_dir, model_dir, args):
         train_set,
         batch_size=args.batch_size,
         num_workers=multiprocessing.cpu_count() // 2,
-        shuffle=True,
+        shuffle=False,
         pin_memory=use_cuda,
         drop_last=True,
     )
@@ -123,7 +126,7 @@ def train(data_dir, model_dir, args):
         val_set,
         batch_size=args.valid_batch_size,
         num_workers=multiprocessing.cpu_count() // 2,
-        shuffle=True,
+        shuffle=False,
         pin_memory=use_cuda,
         drop_last=True,
     )
@@ -143,7 +146,7 @@ def train(data_dir, model_dir, args):
         lr=args.lr,
         weight_decay=5e-4
     )
-    scheduler = StepLR(optimizer, args.lr_decay_step, gamma=1)
+    scheduler = StepLR(optimizer, args.lr_decay_step, gamma=0.5)
 
     # -- logging
     
@@ -153,14 +156,12 @@ def train(data_dir, model_dir, args):
     
 
     # Setup WandB
-    
-    """     import wandb
-    wandb.init(project="Junejae-Experiment", entity="boostcamp-nlp06", name="resnet50+fc+dataAug")
+    wandb.init(project="Junejae-Experiment", entity="boostcamp-nlp06", name="resnet18+fc+dataAug")
     wandb.config = {
         "learning_rate": args.lr,
         "epochs": args.epochs,
         "batch_size": args.batch_size
-        } """
+        }
 
     best_val_acc = 0
     best_val_loss = np.inf
@@ -200,10 +201,10 @@ def train(data_dir, model_dir, args):
                 loss_value = 0
                 matches = 0
 
-            """ wandb.log({"loss": loss})
+            wandb.log({"loss": loss})
 
             # Optional
-            wandb.watch(model) """
+            wandb.watch(model)
 
         scheduler.step()
 

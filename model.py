@@ -68,10 +68,13 @@ class MyFcModel(nn.Module):
         self.resnet50 = models.resnet50(pretrained=True)
         self.resnet50.fc = nn.Linear(in_features=2048, out_features=self.num_classes, bias=True)
 
-        nn.init.xavier_uniform_(self.resnet50.fc.weight)
-        stdv = 1. / math.sqrt(self.resnet50.fc.weight.size(1))
-        self.resnet50.fc.bias.data.uniform_(-stdv,stdv)
-        
+        """ # Freezing some layers
+        count = 0
+        for child in self.resnet18.children():
+            count += 1
+            if count < 6:
+                for param in child.parameters():
+                    param.requires_grad = False """
         
 
     def forward(self, x):
@@ -79,7 +82,7 @@ class MyFcModel(nn.Module):
         1. 위에서 정의한 모델 아키텍쳐를 forward propagation 을 진행해주세요
         2. 결과로 나온 output 을 return 해주세요
         """
-        x = self.resnet50(x)
+        x = self.resnet18(x)
         return x
 
 
