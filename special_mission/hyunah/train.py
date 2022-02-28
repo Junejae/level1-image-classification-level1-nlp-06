@@ -37,8 +37,8 @@ def train(data_loader, model, loss_fn, optm, EPOCH):
             loss.backward()
             optm.step()
 
-            if i % 100 == 0:
-                print("epoch: {} Loss: {:.4f} Acc: {:.4f}".format(epoch, loss.data, accuracy_score(targets, all_preds)))
+#             if i % len(data_loader) == 0:
+        print("epoch: {} | Loss: {:.4f} | Acc: {:.4f}".format(epoch, loss.data, accuracy_score(targets, all_preds)))
     print('done!')
     
     

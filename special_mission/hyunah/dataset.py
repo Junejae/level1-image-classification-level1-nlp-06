@@ -85,6 +85,7 @@ class MaskBaseDataset(Dataset):
     mask_labels = []
     gender_labels = []
     age_labels = []
+    multi_class_labels = []
 
     def __init__(self, data_dir, val_ratio=0.2, transform=None):
         self.data_dir = data_dir
@@ -111,12 +112,14 @@ class MaskBaseDataset(Dataset):
                 id, gender, race, age = profile.split("_")
                 gender_label = GenderLabels.from_str(gender)
                 age_label = AgeLabels.from_number(age)
+                label = self.encode_multi_class(mask_label, gender_label, age_label)
 
                 self.image_paths.append(img_path)
                 self.mask_labels.append(mask_label)
                 self.gender_labels.append(gender_label)
                 self.age_labels.append(age_label)
 
+                
     def set_transform(self, transform):
         self.transform = transform
 
@@ -124,10 +127,7 @@ class MaskBaseDataset(Dataset):
         assert self.transform is not None, ".set_tranform 메소드를 이용하여 transform 을 주입해주세요"
 
         image = self.read_image(index)
-        mask_label = self.get_mask_label(index)
-        gender_label = self.get_gender_label(index)
-        age_label = self.get_age_label(index)
-        multi_class_label = self.encode_multi_class(mask_label, gender_label, age_label)
+        multi_class_label = self.multi_class_labels[index]
 
         image_transform = self.transform(image)
         return image_transform, multi_class_label # tensor_image, label
@@ -216,11 +216,13 @@ class MaskSplitByProfileDataset(MaskBaseDataset):
                     id, gender, race, age = profile.split("_")
                     gender_label = GenderLabels.from_str(gender)
                     age_label = AgeLabels.from_number(age)
+                    label = self.encode_multi_class(mask_label, gender_label, age_label)
 
                     self.image_paths.append(img_path)
                     self.mask_labels.append(mask_label)
                     self.gender_labels.append(gender_label)
                     self.age_labels.append(age_label)
+                    self.multi_class_labels.append(label)
 
                     self.indices[phase].append(cnt) # train & eval new indexs
                     cnt += 1
