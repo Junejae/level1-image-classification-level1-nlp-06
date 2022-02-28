@@ -65,8 +65,13 @@ class MyFcModel(nn.Module):
         3. 모델의 output_dimension 은 num_classes 로 설정해주세요.
         """
         self.num_classes = num_classes
-        self.resnet50 = models.resnet50(pretrained=True)
-        self.resnet50.fc = nn.Linear(in_features=2048, out_features=self.num_classes, bias=True)
+        self.resnet18 = models.resnet18(pretrained=True)
+        self.resnet18.fc = nn.Linear(in_features=512, out_features=self.num_classes, bias=True)
+
+        # initialize
+        nn.init.xavier_uniform_(self.resnet18.fc.weight)
+        stdv = 1. / math.sqrt(self.resnet18.fc.weight.size(1))
+        self.resnet18.fc.bias.data.uniform_(-stdv,stdv)
 
         """ # Freezing some layers
         count = 0
@@ -84,6 +89,64 @@ class MyFcModel(nn.Module):
         """
         x = self.resnet18(x)
         return x
+
+class MyFcModelDropout(nn.Module):
+    def __init__(self, num_classes):
+        super().__init__()
+
+        """
+        1. 위와 같이 생성자의 parameter 에 num_claases 를 포함해주세요.
+        2. 나만의 모델 아키텍쳐를 디자인 해봅니다.
+        3. 모델의 output_dimension 은 num_classes 로 설정해주세요.
+        """
+        self.num_classes = num_classes
+        self.resnet18 = models.resnet50(pretrained=True)
+        self.relu = nn.ReLU(True)
+        self.output_layer = nn.Linear(in_features=1000, out_features=self.num_classes, bias=True)
+
+        # dropouts
+        self.dropouts = nn.ModuleList([nn.Dropout(0.7) for _ in range(5)])
+
+        # initialize
+        nn.init.xavier_uniform_(self.resnet18.fc.weight)
+        stdv = 1. / math.sqrt(self.resnet18.fc.weight.size(1))
+        self.resnet18.fc.bias.data.uniform_(-stdv,stdv)
+
+        nn.init.xavier_uniform_(self.output_layer.weight)
+        stdv = 1. / math.sqrt(self.output_layer.weight.size(1))
+        self.output_layer.bias.data.uniform_(-stdv,stdv)
+
+        """ # Freezing some layers
+        count = 0
+        for child in self.resnet18.children():
+            count += 1
+            if count < 6:
+                for param in child.parameters():
+                    param.requires_grad = False """
+
+    def forward(self, x):
+        """
+        1. 위에서 정의한 모델 아키텍쳐를 forward propagation 을 진행해주세요
+        2. 결과로 나온 output 을 return 해주세요
+        """
+        x = self.resnet18(x)
+        feat = self.relu(x)
+        for i, dropout in enumerate(self.dropouts):
+            if i==0:
+                output = self.output_layer(dropout(feat))
+            else:
+                output += self.output_layer(dropout(feat))
+        else:
+            output /= len(self.dropouts)
+
+        return output
+
+class MyFcModelDropoutTest(MyFcModelDropout):
+    def forward(self, x):
+        x = self.resnet18(x)
+        feat = self.relu(x)
+        output = self.output_layer(feat)
+        return output
 
 
 class MyMlpModel(nn.Module):

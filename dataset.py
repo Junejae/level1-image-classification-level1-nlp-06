@@ -298,13 +298,18 @@ class MaskSplitByProfileDataset(MaskBaseDataset):
 
 
 class TestDataset(Dataset):
-    def __init__(self, img_paths, resize, mean=(0.548, 0.504, 0.479), std=(0.237, 0.247, 0.246)):
+    def __init__(self, img_paths, resize, mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)):
         self.img_paths = img_paths
+        self.mean = mean
+        self.std = std
         self.transform = Compose([
             Resize(resize, Image.BILINEAR),
             ToTensor(),
             Normalize(mean=mean, std=std),
         ])
+    
+    def set_transform(self, transform):
+        self.transform = transform
 
     def __getitem__(self, index):
         image = Image.open(self.img_paths[index])
@@ -318,7 +323,7 @@ class TestDataset(Dataset):
 
 
 class JuneCustomDataset(Dataset):
-    def __init__(self, data_dir, mean=(0.548, 0.504, 0.479), std=(0.237, 0.247, 0.246), val_ratio=0.2, ):
+    def __init__(self, data_dir, mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225), val_ratio=0.2, ):
         self.data_dir = data_dir
         self.mean = mean
         self.std = std
@@ -355,7 +360,7 @@ class JuneCustomDataset(Dataset):
 
     # split in my way
     def split_dataset(self) -> Tuple[Subset, Subset]:
-        sss = ShuffleSplit(n_splits=1, test_size=self.val_ratio)
+        """ sss = ShuffleSplit(n_splits=1, test_size=self.val_ratio)
         
         train_index, val_index = [], []
 
@@ -363,6 +368,14 @@ class JuneCustomDataset(Dataset):
             train_index = t
             val_index = v
        
+        return Subset(self, train_index), Subset(self, val_index) """
+
+        full = list(range(self.data_len))
+
+        div_point = int(self.data_len * (1-self.val_ratio))
+
+        train_index, val_index = full[:div_point], full[div_point:]
+
         return Subset(self, train_index), Subset(self, val_index)
 
     # re-labeling process
@@ -413,8 +426,10 @@ class JuneCustomDataset(Dataset):
             # -- 결측치 교정 끝
 
             # oversampling
-            # n = 16 if img_age == 2 else 1
-            n = 1
+            n = 2 if (img_age == 1 and img_gender == 0) else 1
+            if img_age == 2:
+                n = 8
+            
             for _ in range(n):
                 all_id.append(img_id)
                 all_path.append(absolute_path)
@@ -469,6 +484,17 @@ class JuneCustomAug3:
             RandomHorizontalFlip(p=0.5),
             ToTensor(),
             Normalize(mean=mean, std=std),
+        ])
+
+    def __call__(self, image):
+        return self.transform(image)
+
+class JuneCustomAugSOTA:
+    def __init__(self, mean, std, resize=[512, 384], **args):
+        self.transform = Compose([
+            Resize(resize, Image.BILINEAR),
+            ToTensor(),
+            Normalize(mean=(0.5,0.5,0.5), std=(0.2,0.2,0.2)), # not using CIFAR10 standard
         ])
 
     def __call__(self, image):

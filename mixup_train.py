@@ -11,7 +11,7 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
-from torch.optim.lr_scheduler import StepLR
+from torch.optim.lr_scheduler import StepLR, CosineAnnealingWarmRestarts
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
 
@@ -21,6 +21,8 @@ from loss import create_criterion
 # Custom
 import wandb
 from sklearn.metrics import f1_score
+from torch.autograd import Variable
+from torch import cuda
 
 
 def seed_everything(seed):
@@ -85,6 +87,29 @@ def increment_path(path, exist_ok=False):
         n = max(i) + 1 if i else 2
         return f"{path}{n}"
 
+# Functions for mixup
+def mixup_data(x, y, alpha=1.0, use_cuda=True):
+    '''Returns mixed inputs, pairs of targets, and lambda'''
+    if alpha > 0:
+        lam = np.random.beta(alpha, alpha)
+    else:
+        lam = 1
+
+    batch_size = x.size()[0]
+    if use_cuda:
+        index = torch.randperm(batch_size).cuda()
+    else:
+        index = torch.randperm(batch_size)
+
+    mixed_x = lam * x + (1 - lam) * x[index, :]
+    y_a, y_b = y, y[index]
+    return mixed_x, y_a, y_b, lam
+
+
+def mixup_criterion(criterion, pred, y_a, y_b, lam):
+    return lam * criterion(pred, y_a) + (1 - lam) * criterion(pred, y_b)
+# end of  mixup functions
+
 
 def train(data_dir, model_dir, args):
     seed_everything(args.seed)
@@ -120,7 +145,7 @@ def train(data_dir, model_dir, args):
         num_workers=multiprocessing.cpu_count() // 2,
         shuffle=True,
         pin_memory=use_cuda,
-        drop_last=False,
+        drop_last=True,
     )
 
     val_loader = DataLoader(
@@ -129,7 +154,7 @@ def train(data_dir, model_dir, args):
         num_workers=multiprocessing.cpu_count() // 2,
         shuffle=True,
         pin_memory=use_cuda,
-        drop_last=False,
+        drop_last=True,
     )
     
     # -- model
@@ -147,7 +172,8 @@ def train(data_dir, model_dir, args):
         lr=args.lr,
         weight_decay=5e-4
     )
-    scheduler = StepLR(optimizer, args.lr_decay_step, gamma=0.5)
+    #scheduler = StepLR(optimizer, args.lr_decay_step, gamma=0.5)
+    scheduler = CosineAnnealingWarmRestarts(optimizer=optimizer, T_0=args.lr_decay_step, T_mult=1, eta_min=0.000001)
 
     # -- logging
     
@@ -157,7 +183,7 @@ def train(data_dir, model_dir, args):
     
 
     # Setup WandB
-    wandb.init(project="Junejae-Experiment", entity="boostcamp-nlp06", name="resnet50+fc+dataCorrection+sota")
+    wandb.init(project="Junejae-Experiment", entity="boostcamp-nlp06", name="resnet50+fc+mixup+dropout")
     wandb.config = {
         "learning_rate": args.lr,
         "epochs": args.epochs,
@@ -170,24 +196,32 @@ def train(data_dir, model_dir, args):
     for epoch in range(args.epochs):
         # train loop
         model.train()
+
         loss_value = 0
         matches = 0
+
         for idx, train_batch in enumerate(train_loader):
             inputs, labels = train_batch
             inputs = inputs.to(device)
             labels = labels.to(device)
 
+            # mixup process
+            inputs, targets_a, targets_b, lam = mixup_data(inputs, labels, alpha=1)
+            inputs, targets_a, targets_b = map(Variable, (inputs, targets_a, targets_b))
+
             optimizer.zero_grad()
 
             outs = model(inputs)
-            preds = torch.argmax(outs, dim=-1)
-            loss = criterion(outs, labels)
+            _, preds = torch.max(outs.data, 1)
+            loss = mixup_criterion(criterion, outs, targets_a, targets_b, lam)
 
             loss.backward()
             optimizer.step()
 
             loss_value += loss.item()
-            matches += (preds == labels).sum().item()
+            matches += (lam * preds.eq(targets_a.data).cpu().sum().float()
+                    + (1 - lam) * preds.eq(targets_b.data).cpu().sum().float())
+            
             if (idx + 1) % args.log_interval == 0:
                 train_loss = loss_value / args.log_interval
                 train_acc = matches / args.batch_size / args.log_interval
@@ -205,8 +239,6 @@ def train(data_dir, model_dir, args):
 
             wandb.log({"loss": loss})
 
-            # Optional
-            wandb.watch(model)
 
         scheduler.step()
 
@@ -271,6 +303,8 @@ def train(data_dir, model_dir, args):
                 f"best acc : {best_val_acc:4.2%}, best loss: {best_val_loss:4.2}, best f1: {best_val_f1:4.2}"
             )
             
+            wandb.log({"accuracy": val_acc, "f1-score":val_f1})
+
             logger.add_scalar("Val/loss", val_loss, epoch)
             logger.add_scalar("Val/accuracy", val_acc, epoch)
             # logger.add_figure("results", figure, epoch)
