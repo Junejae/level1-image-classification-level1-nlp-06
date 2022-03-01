@@ -23,7 +23,8 @@ import wandb
 from sklearn.metrics import f1_score
 from torch.autograd import Variable
 from torch import cuda
-
+import pandas as pd
+from glob import glob
 
 def seed_everything(seed):
     torch.manual_seed(seed)
@@ -110,6 +111,120 @@ def mixup_criterion(criterion, pred, y_a, y_b, lam):
     return lam * criterion(pred, y_a) + (1 - lam) * criterion(pred, y_b)
 # end of  mixup functions
 
+# Start of Custom split
+def splitEvenlyAndOversampled(train_dir):
+    prepro_data_info_train = pd.DataFrame(columns={'id','img_path','race','mask','gender','age','label'})
+    prepro_data_info_valid = pd.DataFrame(columns={'id','img_path','race','mask','gender','age','label'})
+
+    all_id_train, all_path_train, all_race_train, all_mask_train, all_age_train, all_gender_train, all_label_train = [],[],[],[],[],[],[]
+    all_id_valid, all_path_valid, all_race_valid, all_mask_valid, all_age_valid, all_gender_valid, all_label_valid = [],[],[],[],[],[],[]
+
+    current_class_capacity = [18, 18, 18, 18, 18, 18]
+    valid_id_list = []
+    
+    for absolute_path in glob(train_dir + "/*/*"):
+
+        split_list = absolute_path.split("/")
+        img_name = split_list[-1]
+        img_path = split_list[-2]
+
+        path_split = img_path.split("_")
+
+        img_id = path_split[0]
+        img_gender = 0 if path_split[1] == "male" else 1
+        img_race = path_split[2]
+        img_age = min(2, int(path_split[3]) // 30)
+
+        img_mask = 0
+        if 'incorrect' in img_name:
+            img_mask = 1
+        elif 'normal' in img_name:
+            img_mask = 2
+
+        # -- 미스라벨링 교정 시작
+        # -- Swap Gender
+        if img_id in ['000225','000664','000767','001498-1','001509','003113','003223','004281','004432','005223','006359',
+                '006360','006361','006362','006363','006364','006424','000667','000725','000736','000817','003780','006504']:
+            temp = 0 if img_gender == 1 else 1
+            img_gender = temp
+        
+        # -- Change Age to ~29
+        if img_id in ['001009','001064','001637','001666','001852']:
+            img_age = 0
+        
+        # -- Change Age to 60~
+        if img_id in ['004348']: # 고민거리, 이분은 액면가는 폭삭 늙으셨지만 59세로 찍혀 있는데 과연 이걸 60대 노인 취급해도 될지 안 될지...
+            img_age = 2
+
+        # -- Correct Mask Status, normal <-> incorrect
+        if img_id in ['000020','004418','005227']:
+            if img_mask != 0:
+                temp = 1 if img_mask == 2 else 2
+                img_mask = temp
+        # -- 미스라벨링 교정 끝
+
+        
+        # Check if it can go to the Valid Set
+        is_train = True
+
+        if img_id in valid_id_list:
+            is_train = False
+        
+        elif current_class_capacity[img_gender*3 + img_age] != 0:
+            current_class_capacity[img_gender*3 + img_age] -= 1
+            valid_id_list.append(img_id)
+            is_train = False
+
+
+        if is_train:
+            # oversampling
+            n = 1
+            if (img_age == 1 and img_gender == 0):
+                n *= 2
+            if img_age == 2:
+                n *= 10
+            if img_mask != 0:
+                n *= 5
+            for _ in range(n):
+                all_id_train.append(img_id)
+                all_path_train.append(absolute_path)
+                all_race_train.append(img_race)
+                all_mask_train.append(img_mask)
+                all_gender_train.append(img_gender)
+                all_age_train.append(img_age)
+                all_label_train.append(img_mask*6 + img_gender*3 + img_age)
+        else:
+            # oversampling
+            n = 1
+            if img_mask != 0:
+                n *= 4
+            for _ in range(n):
+                all_id_valid.append(img_id)
+                all_path_valid.append(absolute_path)
+                all_race_valid.append(img_race)
+                all_mask_valid.append(img_mask)
+                all_gender_valid.append(img_gender)
+                all_age_valid.append(img_age)
+                all_label_valid.append(img_mask*6 + img_gender*3 + img_age)
+        
+
+    prepro_data_info_train['id'] = all_id_train
+    prepro_data_info_train['img_path'] = all_path_train
+    prepro_data_info_train['race'] = all_race_train
+    prepro_data_info_train['mask'] = all_mask_train
+    prepro_data_info_train['gender'] = all_gender_train
+    prepro_data_info_train['age'] = all_age_train
+    prepro_data_info_train['label'] = all_label_train
+
+    prepro_data_info_valid['id'] = all_id_valid
+    prepro_data_info_valid['img_path'] = all_path_valid
+    prepro_data_info_valid['race'] = all_race_valid
+    prepro_data_info_valid['mask'] = all_mask_valid
+    prepro_data_info_valid['gender'] = all_gender_valid
+    prepro_data_info_valid['age'] = all_age_valid
+    prepro_data_info_valid['label'] = all_label_valid
+    
+    return prepro_data_info_train, prepro_data_info_valid
 
 def train(data_dir, model_dir, args):
     seed_everything(args.seed)
@@ -121,23 +236,28 @@ def train(data_dir, model_dir, args):
     device = torch.device("cuda" if use_cuda else "cpu")
 
     # -- dataset
+    train_list, val_list = splitEvenlyAndOversampled(data_dir)
+
     dataset_module = getattr(import_module("dataset"), args.dataset)  # default: MaskBaseDataset
-    dataset = dataset_module(
-        data_dir=data_dir,
-    )
-    num_classes = dataset.num_classes  # 18
+
+    train_set = dataset_module(train_list)
+    val_set = dataset_module(val_list)
+
+    num_classes = train_set.num_classes  # 18
+    
 
     # -- augmentation
     transform_module = getattr(import_module("dataset"), args.augmentation)  # default: BaseAugmentation
     transform = transform_module(
         resize=args.resize,
-        mean=dataset.mean,
-        std=dataset.std,
+        mean=train_set.mean,
+        std=train_set.std,
     )
-    dataset.set_transform(transform)
+    
+    train_set.set_transform(transform)
+    val_set.set_transform(transform)
 
     # -- data_loader
-    train_set, val_set = dataset.split_dataset()
 
     train_loader = DataLoader(
         train_set,
@@ -170,7 +290,7 @@ def train(data_dir, model_dir, args):
     optimizer = opt_module(
         filter(lambda p: p.requires_grad, model.parameters()),
         lr=args.lr,
-        weight_decay=5e-4
+        # weight_decay=5e-4
     )
     scheduler = StepLR(optimizer, args.lr_decay_step, gamma=0.5)
     # scheduler = CosineAnnealingWarmRestarts(optimizer=optimizer, T_0=args.lr_decay_step, T_mult=1, eta_min=0.000001)
@@ -183,7 +303,7 @@ def train(data_dir, model_dir, args):
     
 
     # Setup WandB
-    wandb.init(project="Junejae-Experiment", entity="boostcamp-nlp06", name="resnet50+fc+mixup+dropout")
+    wandb.init(project="Junejae-Experiment", entity="boostcamp-nlp06", name="resnet50+fc+mixup+normal")
     wandb.config = {
         "learning_rate": args.lr,
         "epochs": args.epochs,
@@ -201,26 +321,40 @@ def train(data_dir, model_dir, args):
         matches = 0
 
         for idx, train_batch in enumerate(train_loader):
+            
+            is_normal_data = (np.random.randint(3) == 1) # feed normal image with 20% probability
+
             inputs, labels = train_batch
             inputs = inputs.to(device)
             labels = labels.to(device)
 
-            # mixup process
-            inputs, targets_a, targets_b, lam = mixup_data(inputs, labels, alpha=1)
-            inputs, targets_a, targets_b = map(Variable, (inputs, targets_a, targets_b))
+            if not is_normal_data:
+                # mixup process
+                inputs, targets_a, targets_b, lam = mixup_data(inputs, labels, alpha=1)
+                inputs, targets_a, targets_b = map(Variable, (inputs, targets_a, targets_b))
 
             optimizer.zero_grad()
 
             outs = model(inputs)
-            _, preds = torch.max(outs.data, 1)
-            loss = mixup_criterion(criterion, outs, targets_a, targets_b, lam)
+
+            if is_normal_data:
+                preds = torch.argmax(outs, dim=-1)
+                loss = criterion(outs, labels)
+            
+            else:
+                _, preds = torch.max(outs.data, 1)
+                loss = mixup_criterion(criterion, outs, targets_a, targets_b, lam)
 
             loss.backward()
             optimizer.step()
 
             loss_value += loss.item()
-            matches += (lam * preds.eq(targets_a.data).cpu().sum().float()
-                    + (1 - lam) * preds.eq(targets_b.data).cpu().sum().float())
+
+            if is_normal_data:
+                matches += (preds == labels).sum().item()
+            else:
+                matches += (lam * preds.eq(targets_a.data).cpu().sum().float()
+                        + (1 - lam) * preds.eq(targets_b.data).cpu().sum().float())
             
             if (idx + 1) % args.log_interval == 0:
                 train_loss = loss_value / args.log_interval
@@ -255,36 +389,38 @@ def train(data_dir, model_dir, args):
             val_loss_items = []
             val_acc_items = []
             # figure = None
-            for val_batch in val_loader:
-                inputs, labels = val_batch
-                inputs = inputs.to(device)
-                labels = labels.to(device)
 
-                outs = model(inputs)
-                preds = torch.argmax(outs, dim=-1)
+            for _ in range(4):
+                for val_batch in val_loader:
+                    inputs, labels = val_batch
+                    inputs = inputs.to(device)
+                    labels = labels.to(device)
 
-                # for f1
-                targets.extend(labels.cpu().numpy())
-                all_predictions.extend(preds.cpu().numpy())
-                #
+                    outs = model(inputs)
+                    preds = torch.argmax(outs, dim=-1)
 
-                loss_item = criterion(outs, labels).item()
-                acc_item = (labels == preds).sum().item()
-                val_loss_items.append(loss_item)
-                val_acc_items.append(acc_item)
-                '''
-                if figure is None:
-                    inputs_np = torch.clone(inputs).detach().cpu().permute(0, 2, 3, 1).numpy()
-                    inputs_np = dataset_module.denormalize_image(inputs_np, dataset.mean, dataset.std)
-                    figure = grid_image(
-                        inputs_np, labels, preds, n=16, shuffle=args.dataset != "MaskSplitByProfileDataset"
-                    )
-                '''
+                    # for f1
+                    targets.extend(labels.cpu().numpy())
+                    all_predictions.extend(preds.cpu().numpy())
+                    #
+
+                    loss_item = criterion(outs, labels).item()
+                    acc_item = (labels == preds).sum().item()
+                    val_loss_items.append(loss_item)
+                    val_acc_items.append(acc_item)
+                    '''
+                    if figure is None:
+                        inputs_np = torch.clone(inputs).detach().cpu().permute(0, 2, 3, 1).numpy()
+                        inputs_np = dataset_module.denormalize_image(inputs_np, dataset.mean, dataset.std)
+                        figure = grid_image(
+                            inputs_np, labels, preds, n=16, shuffle=args.dataset != "MaskSplitByProfileDataset"
+                        )
+                    '''
             # calc f1
             val_f1 = np.mean(f1_score(targets, all_predictions, average=None))
 
             val_loss = np.sum(val_loss_items) / len(val_loader)
-            val_acc = np.sum(val_acc_items) / len(val_set)
+            val_acc = np.sum(val_acc_items) / len(val_set) / 4
             best_val_loss = min(best_val_loss, val_loss)
             if val_acc > best_val_acc:
                 """ 

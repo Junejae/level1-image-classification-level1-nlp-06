@@ -20,7 +20,7 @@ def load_model(saved_model, num_classes, device):
     # tar = tarfile.open(tarpath, 'r:gz')
     # tar.extractall(path=saved_model)
 
-    model_path = os.path.join(saved_model, 'best.pth')
+    model_path = os.path.join(saved_model, 'last.pth')
     model.load_state_dict(torch.load(model_path, map_location=device))
 
     return model
@@ -73,6 +73,7 @@ def inference(data_dir, model_dir, output_dir, args):
     info['ans'] = preds
     save_path = os.path.join(output_dir, f'output.csv')
     info.to_csv(save_path, index=False)
+    print(info.ans.value_counts())
     print(f"Inference Done! Inference result saved at {save_path}")
 
 

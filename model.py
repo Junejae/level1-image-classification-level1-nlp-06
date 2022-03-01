@@ -65,8 +65,8 @@ class MyFcModel(nn.Module):
         3. 모델의 output_dimension 은 num_classes 로 설정해주세요.
         """
         self.num_classes = num_classes
-        self.resnet18 = models.resnet18(pretrained=True)
-        self.resnet18.fc = nn.Linear(in_features=512, out_features=self.num_classes, bias=True)
+        self.resnet18 = models.resnet50(pretrained=True)
+        self.resnet18.fc = nn.Linear(in_features=2048, out_features=self.num_classes, bias=True)
 
         # initialize
         nn.init.xavier_uniform_(self.resnet18.fc.weight)

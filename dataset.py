@@ -426,9 +426,13 @@ class JuneCustomDataset(Dataset):
             # -- 결측치 교정 끝
 
             # oversampling
-            n = 2 if (img_age == 1 and img_gender == 0) else 1
+            n = 1
+            if (img_age == 1 and img_gender == 0):
+                n *= 2
             if img_age == 2:
-                n = 8
+                n *= 8
+            if img_mask != 0:
+                n *= 4
             
             for _ in range(n):
                 all_id.append(img_id)
@@ -449,6 +453,34 @@ class JuneCustomDataset(Dataset):
         prepro_data_info['label'] = all_label
         
         return prepro_data_info
+
+class JuneCustomDataset2(Dataset):
+    def __init__(self, data_info, mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)):
+        self.mean = mean
+        self.std = std
+        self.num_classes = 18
+
+        self.data_info = data_info
+        self.img_paths = self.data_info.img_path.tolist()
+        self.transform = None
+        self.label_arr = self.data_info.label.tolist()
+
+        self.data_len = len(self.data_info.img_path)
+        
+    def set_transform(self, transform):
+        self.transform = transform
+
+    def __getitem__(self, index):
+        image = Image.open(self.img_paths[index])
+        label = self.label_arr[index]
+
+        if self.transform:
+            image = self.transform(image)
+
+        return image, label
+
+    def __len__(self):
+        return self.data_len
 
 class JuneCustomAug:
     def __init__(self, mean, std, resize=[512, 384], **args):
@@ -479,7 +511,6 @@ class JuneCustomAug3:
     def __init__(self, mean, std, resize=[512, 384], **args):
         self.transform = Compose([
             Resize(resize, Image.BILINEAR),
-            RandomPerspective(distortion_scale=0.2, p=0.8),
             RandomRotation(degrees=20),
             RandomHorizontalFlip(p=0.5),
             ToTensor(),
