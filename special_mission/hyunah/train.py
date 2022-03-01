@@ -57,8 +57,8 @@ def k_fold_train(k, dataset, model, loss_fn, criterion_fn, optm, BATCH_SIZE, EPO
         m = len(val_loader)
 
         for epoch in range(EPOCH):
-            loss_value = 0
-            matches = 0
+            targets = []
+            all_preds = []
             # train process
             model.train()
             for i, train_batch in enumerate(train_loader):
@@ -76,14 +76,13 @@ def k_fold_train(k, dataset, model, loss_fn, criterion_fn, optm, BATCH_SIZE, EPO
                     optm.step()
                     optm.zero_grad()
             
-                loss_value += loss.item()
-                matches += (preds == labels).sum().item()
+                targets.extend(labels.cpu().numpy())
+                all_preds.extend(preds.cpu().numpy())
 #             if is_wandb_logging:
-            wandb.log({"train_loss": loss_value/n, "train_acc": matches/BATCH_SIZE/n})
+            wandb.log({"train_loss": np.mean(f1_score(targets, all_preds, average=None)), "train_acc": accuracy_score(targets, all_preds)})
             
-            loss_value = 0
-            matches = 0
-            loss_item = []
+            targets = []
+            all_preds = []
             # eval process
             with torch.no_grad():
                 model.eval()
@@ -94,17 +93,21 @@ def k_fold_train(k, dataset, model, loss_fn, criterion_fn, optm, BATCH_SIZE, EPO
 
                     outs = model(imgs)
                     preds = torch.argmax(outs, dim=-1)
-                    loss_item.append(criterion_fn(outs, labels).item())
                     
-                    loss_value += loss.item()
-                    matches += (preds == labels).sum().item()
-                print("F1 Loss: {:.4f} | Accuracy: {:.4f}".format(np.sum(loss_item)/m, matches/BATCH_SIZE/m))
+                    targets.extend(labels.cpu().numpy())
+                    all_preds.extend(preds.cpu().numpy())
+            
+            f1 = np.mean(f1_score(targets, all_preds, average=None))
+            acc = accuracy_score(targets, all_preds)
+            print("F1 Loss: {:.4f} | Accuracy: {:.4f}".format(f1, acc))
 #             if is_wandb_logging:
-            wandb.log({"eval_loss": np.sum(loss_item)/m, "eval_acc": matches/BATCH_SIZE/m})
+            wandb.log({"eval_loss": f1, "eval_acc": acc})
                 
-            if np.sum(loss_item)/m < best_loss:
+            if f1 < best_loss:
+                best_loss = f1
+            else:
                 counter += 1
-            if counter >= patience:
+            if counter > patience:
                 print('Early Stopping...')
                 break
 
