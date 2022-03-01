@@ -118,6 +118,7 @@ class MaskBaseDataset(Dataset):
                 self.mask_labels.append(mask_label)
                 self.gender_labels.append(gender_label)
                 self.age_labels.append(age_label)
+                self.multi_class_labels.append(label)
 
                 
     def set_transform(self, transform):
@@ -238,12 +239,6 @@ class MaskSplitByProfileDataset(MaskBaseDataset):
 
 
 
-def convert_to_dataloader(dataset, BATCH_SIZE, is_shuffle):
-    return DataLoader(
-        dataset,
-        batch_size = BATCH_SIZE,
-        shuffle=is_shuffle
-    )
 
 # class TrainDataset(Dataset):
 #     # input: image_list, target_list

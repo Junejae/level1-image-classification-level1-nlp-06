@@ -1,0 +1,2 @@
+/opt/conda/lib/python3.8/site-packages/torchvision/transforms/functional_tensor.py:876: UserWarning: Argument fill/fillcolor is not supported for Tensor input. Fill value is zero
+  warnings.warn("Argument fill/fillcolor is not supported for Tensor input. Fill value is zero")
