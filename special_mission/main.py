@@ -142,9 +142,8 @@ def train(data_dir, model_dir, args):
                 logger.add_scalar("Train/accuracy", train_acc, epoch * len(train_loader) + idx)
                 
                 wandb.log({
-                    "Examples": example_images,
-                    "Test Accuracy": 100. * correct / len(test_loader.dataset),
-                    "Test Loss": test_loss})
+                    "Train Accuracy": train_acc,
+                    "Train Loss": train_loss})
                 
                 loss_value = 0
                 matches = 0
@@ -193,20 +192,18 @@ def train(data_dir, model_dir, args):
             logger.add_scalar("Val/loss", val_loss, epoch)
             logger.add_scalar("Val/accuracy", val_acc, epoch)
             logger.add_figure("results", figure, epoch)
+            
+            wandb.log({
+                "Val Accuracy": val_acc,
+                "Val Loss": val_loss,
+                "results": figure})
+                            
             print()
 
 
 if __name__ == "__main__":
     
-    wandb.init(project="hyunjin-project", entity="boostcamp-nlp06", name="resnet50+xavier+stepLR", config={
-    "learning_rate": args.initial_lr,
-    "dropout": 0.7,
-    "epoch": args.epochs,
-    "batch_size": args.batch_size,
-    "resize": args.resize
-    })
-    
-    config = wandb.config
+
     
     parser = argparse.ArgumentParser()
 
@@ -226,7 +223,15 @@ if __name__ == "__main__":
     
     args = parser.parse_args()
     
+    wandb.init(project="hyunjin-project", entity="boostcamp-nlp06", name="resnet50+xavier+stepLR", config={
+    "learning_rate": args.initial_lr,
+    "dropout": 0.7,
+    "epoch": args.epochs,
+    "batch_size": args.batch_size,
+    "resize": args.resize
+    })
     
+    config = wandb.config
 
 
     model_dir = args.model_dir
