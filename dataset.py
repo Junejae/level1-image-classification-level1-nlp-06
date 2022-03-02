@@ -8,7 +8,7 @@ import numpy as np
 import torch
 from PIL import Image
 from torch.utils.data import Dataset, Subset, random_split
-from torchvision.transforms import Resize, ToTensor, Normalize, Compose, CenterCrop, ColorJitter, RandomPerspective, RandomHorizontalFlip, RandomRotation
+from torchvision.transforms import Resize, ToTensor, Normalize, Compose, CenterCrop, ColorJitter, RandomPerspective, RandomHorizontalFlip, RandomRotation, RandomCrop
 # customize
 from glob import glob
 import pandas as pd
@@ -513,6 +513,20 @@ class JuneCustomAug3:
             Resize(resize, Image.BILINEAR),
             RandomRotation(degrees=20),
             RandomHorizontalFlip(p=0.5),
+            ToTensor(),
+            Normalize(mean=mean, std=std),
+        ])
+
+    def __call__(self, image):
+        return self.transform(image)
+
+class JuneCustomAug4:
+    def __init__(self, mean, std, resize=[512, 384], **args):
+        self.transform = Compose([
+            Resize(resize, Image.BILINEAR),
+            RandomHorizontalFlip(p=0.5),
+            RandomPerspective(distortion_scale=0.2, p=0.7),
+            RandomRotation(degrees=20),
             ToTensor(),
             Normalize(mean=mean, std=std),
         ])

@@ -141,7 +141,7 @@ def splitEvenlyAndOversampled(train_dir):
         elif 'normal' in img_name:
             img_mask = 2
 
-        # -- 미스라벨링 교정 시작
+        """ # -- 미스라벨링 교정 시작
         # -- Swap Gender
         if img_id in ['000225','000664','000767','001498-1','001509','003113','003223','004281','004432','005223','006359',
                 '006360','006361','006362','006363','006364','006424','000667','000725','000736','000817','003780','006504']:
@@ -161,7 +161,7 @@ def splitEvenlyAndOversampled(train_dir):
             if img_mask != 0:
                 temp = 1 if img_mask == 2 else 2
                 img_mask = temp
-        # -- 미스라벨링 교정 끝
+        # -- 미스라벨링 교정 끝 """
 
         
         # Check if it can go to the Valid Set
@@ -303,7 +303,7 @@ def train(data_dir, model_dir, args):
     
 
     # Setup WandB
-    wandb.init(project="Junejae-Experiment", entity="boostcamp-nlp06", name="vgg16+cross+mixup")
+    wandb.init(project="Junejae-Experiment", entity="boostcamp-nlp06", name="effib1+focal+default")
     wandb.config = {
         "learning_rate": args.lr,
         "epochs": args.epochs,
@@ -327,8 +327,8 @@ def train(data_dir, model_dir, args):
 
         for idx, train_batch in enumerate(train_loader):
             
-            is_normal_data = (np.random.randint(3) == 6) # feed normal image with 0% probability
-            # is_normal_data = True # feed normal image with 100% probability
+            # is_normal_data = (np.random.randint(3) == 6) # feed normal image with 0% probability
+            is_normal_data = True # feed normal image with 100% probability
 
             inputs, labels = train_batch
             inputs = inputs.to(device)
@@ -549,7 +549,7 @@ if __name__ == '__main__':
     parser.add_argument('--lr', type=float, default=1e-3, help='learning rate (default: 1e-3)')
     parser.add_argument('--val_ratio', type=float, default=0.2, help='ratio for validaton (default: 0.2)')
     parser.add_argument('--criterion', type=str, default='cross_entropy', help='criterion type (default: cross_entropy)')
-    parser.add_argument('--lr_decay_step', type=int, default=200, help='learning rate scheduler deacy step (default: 20)')
+    parser.add_argument('--lr_decay_step', type=int, default=20, help='learning rate scheduler deacy step (default: 20)')
     parser.add_argument('--log_interval', type=int, default=20, help='how many batches to wait before logging training status')
     parser.add_argument('--name', default='exp', help='model save at {SM_MODEL_DIR}/{name}')
 
