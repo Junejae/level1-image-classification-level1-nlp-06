@@ -4,8 +4,10 @@ from importlib import import_module
 
 import pandas as pd
 import torch
+import torch.nn.functional as F
 from torch.utils.data import DataLoader
 from dataset import TestDataset
+from sklearn.metrics import accuracy_score
 
 
 def test(test_dir, model, transform=None, saving_filename='submission.csv'):
@@ -42,8 +44,29 @@ def test(test_dir, model, transform=None, saving_filename='submission.csv'):
     print('test inference is done!')
 
 
-    
-    
+def compare_with_SOTA(test_dir, test_filename):
+    pred = pd.read_csv(test_dir + (test_dir.endswith('/') and '' or '/') + test_filename)
+    sota = pd.read_csv(test_dir + (test_dir.endswith('/') and '' or '/') + 'SOTA.csv')
+    return accuracy_score(list(pred.ans), list(sota.ans))
+
+def ensemble_hard_voting_by(test_dir, filenames, NUM_CLASS=18):
+    '''
+    parameter :
+        test_dir (string) = "./input/data/eval"
+        filenames (list) = ["SOTA.csv", "ResNet_Focal_Adam.csv"]
+        
+        NUM_CLASS (int) = 18 (default)
+        
+    output : 
+        ans (list) = [13, 1, 13]
+    '''
+    n = len(pd.read_csv(test_dir + '/' + filenames[0]))
+    result_ans = torch.zeros_like(torch.empty(n, NUM_CLASS))
+    for name in filenames:
+        pred = pd.read_csv(test_dir + '/' + name)
+        result_ans += F.one_hot(torch.tensor(pred.ans))
+    return result_ans.argmax(dim=-1).tolist()
+
 
 def load_model(saved_model, num_classes, device):
     model_cls = getattr(import_module("model"), args.model)

@@ -691,3 +691,128 @@
 2022-03-01 23:17:02,019 DEBUG   SenderThread:3754 [sender.py:send_request():249] send_request: stop_status
 2022-03-01 23:17:17,209 DEBUG   HandlerThread:3754 [handler.py:handle_request():131] handle_request: stop_status
 2022-03-01 23:17:17,209 DEBUG   SenderThread:3754 [sender.py:send_request():249] send_request: stop_status
+2022-03-01 23:17:32,405 DEBUG   HandlerThread:3754 [handler.py:handle_request():131] handle_request: stop_status
+2022-03-01 23:17:32,406 DEBUG   SenderThread:3754 [sender.py:send_request():249] send_request: stop_status
+2022-03-01 23:17:47,592 DEBUG   HandlerThread:3754 [handler.py:handle_request():131] handle_request: stop_status
+2022-03-01 23:17:47,593 DEBUG   SenderThread:3754 [sender.py:send_request():249] send_request: stop_status
+2022-03-01 23:18:02,782 DEBUG   HandlerThread:3754 [handler.py:handle_request():131] handle_request: stop_status
+2022-03-01 23:18:02,782 DEBUG   SenderThread:3754 [sender.py:send_request():249] send_request: stop_status
+2022-03-01 23:18:17,989 DEBUG   HandlerThread:3754 [handler.py:handle_request():131] handle_request: stop_status
+2022-03-01 23:18:17,990 DEBUG   SenderThread:3754 [sender.py:send_request():249] send_request: stop_status
+2022-03-01 23:18:33,186 DEBUG   HandlerThread:3754 [handler.py:handle_request():131] handle_request: stop_status
+2022-03-01 23:18:33,186 DEBUG   SenderThread:3754 [sender.py:send_request():249] send_request: stop_status
+2022-03-01 23:18:48,381 DEBUG   HandlerThread:3754 [handler.py:handle_request():131] handle_request: stop_status
+2022-03-01 23:18:48,382 DEBUG   SenderThread:3754 [sender.py:send_request():249] send_request: stop_status
+2022-03-01 23:19:03,573 DEBUG   HandlerThread:3754 [handler.py:handle_request():131] handle_request: stop_status
+2022-03-01 23:19:03,574 DEBUG   SenderThread:3754 [sender.py:send_request():249] send_request: stop_status
+2022-03-01 23:19:11,178 DEBUG   HandlerThread:3754 [handler.py:handle_request():131] handle_request: resume
+2022-03-01 23:19:11,178 INFO    HandlerThread:3754 [handler.py:handle_request_resume():611] starting system metrics thread
+2022-03-01 23:19:11,178 DEBUG   HandlerThread:3754 [handler.py:handle_request():131] handle_request: pause
+2022-03-01 23:19:11,178 INFO    HandlerThread:3754 [handler.py:handle_request_pause():620] stopping system metrics thread
+2022-03-01 23:19:11,191 DEBUG   SenderThread:3754 [sender.py:send():235] send: stats
+2022-03-01 23:19:13,647 WARNING MainThread:3754 [internal.py:wandb_internal():152] Internal process interrupt: 1
+2022-03-01 23:19:14,422 DEBUG   HandlerThread:3754 [handler.py:handle_request():131] handle_request: poll_exit
+2022-03-01 23:19:14,422 DEBUG   SenderThread:3754 [sender.py:send():235] send: telemetry
+2022-03-01 23:19:14,422 DEBUG   SenderThread:3754 [sender.py:send():235] send: exit
+2022-03-01 23:19:14,422 INFO    SenderThread:3754 [sender.py:send_exit():371] handling exit code: 0
+2022-03-01 23:19:14,422 INFO    SenderThread:3754 [sender.py:send_exit():373] handling runtime: 2647
+2022-03-01 23:19:14,423 INFO    SenderThread:3754 [sender.py:_save_file():944] saving file wandb-summary.json with policy end
+2022-03-01 23:19:14,423 INFO    SenderThread:3754 [sender.py:send_exit():379] send defer
+2022-03-01 23:19:14,423 DEBUG   SenderThread:3754 [sender.py:send_request():249] send_request: poll_exit
+2022-03-01 23:19:14,424 DEBUG   HandlerThread:3754 [handler.py:handle_request():131] handle_request: defer
+2022-03-01 23:19:14,424 INFO    HandlerThread:3754 [handler.py:handle_request_defer():154] handle defer: 0
+2022-03-01 23:19:14,424 DEBUG   SenderThread:3754 [sender.py:send_request():249] send_request: defer
+2022-03-01 23:19:14,424 INFO    SenderThread:3754 [sender.py:send_request_defer():388] handle sender defer: 0
+2022-03-01 23:19:14,424 INFO    SenderThread:3754 [sender.py:transition_state():392] send defer: 1
+2022-03-01 23:19:14,424 DEBUG   HandlerThread:3754 [handler.py:handle_request():131] handle_request: defer
+2022-03-01 23:19:14,424 INFO    HandlerThread:3754 [handler.py:handle_request_defer():154] handle defer: 1
+2022-03-01 23:19:14,424 DEBUG   SenderThread:3754 [sender.py:send_request():249] send_request: defer
+2022-03-01 23:19:14,424 INFO    SenderThread:3754 [sender.py:send_request_defer():388] handle sender defer: 1
+2022-03-01 23:19:14,424 INFO    SenderThread:3754 [sender.py:transition_state():392] send defer: 2
+2022-03-01 23:19:14,425 DEBUG   HandlerThread:3754 [handler.py:handle_request():131] handle_request: defer
+2022-03-01 23:19:14,425 INFO    HandlerThread:3754 [handler.py:handle_request_defer():154] handle defer: 2
+2022-03-01 23:19:14,425 DEBUG   SenderThread:3754 [sender.py:send_request():249] send_request: defer
+2022-03-01 23:19:14,425 INFO    SenderThread:3754 [sender.py:send_request_defer():388] handle sender defer: 2
+2022-03-01 23:19:14,425 INFO    SenderThread:3754 [sender.py:transition_state():392] send defer: 3
+2022-03-01 23:19:14,425 DEBUG   HandlerThread:3754 [handler.py:handle_request():131] handle_request: defer
+2022-03-01 23:19:14,425 INFO    HandlerThread:3754 [handler.py:handle_request_defer():154] handle defer: 3
+2022-03-01 23:19:14,425 DEBUG   SenderThread:3754 [sender.py:send():235] send: summary
+2022-03-01 23:19:14,426 INFO    SenderThread:3754 [sender.py:_save_file():944] saving file wandb-summary.json with policy end
+2022-03-01 23:19:14,426 DEBUG   SenderThread:3754 [sender.py:send_request():249] send_request: defer
+2022-03-01 23:19:14,426 INFO    SenderThread:3754 [sender.py:send_request_defer():388] handle sender defer: 3
+2022-03-01 23:19:14,426 INFO    SenderThread:3754 [sender.py:transition_state():392] send defer: 4
+2022-03-01 23:19:14,426 DEBUG   HandlerThread:3754 [handler.py:handle_request():131] handle_request: defer
+2022-03-01 23:19:14,426 INFO    HandlerThread:3754 [handler.py:handle_request_defer():154] handle defer: 4
+2022-03-01 23:19:14,426 DEBUG   SenderThread:3754 [sender.py:send_request():249] send_request: defer
+2022-03-01 23:19:14,426 INFO    SenderThread:3754 [sender.py:send_request_defer():388] handle sender defer: 4
+2022-03-01 23:19:14,530 DEBUG   HandlerThread:3754 [handler.py:handle_request():131] handle_request: poll_exit
+2022-03-01 23:19:14,631 INFO    SenderThread:3754 [sender.py:transition_state():392] send defer: 5
+2022-03-01 23:19:14,631 DEBUG   SenderThread:3754 [sender.py:send_request():249] send_request: poll_exit
+2022-03-01 23:19:14,631 DEBUG   HandlerThread:3754 [handler.py:handle_request():131] handle_request: defer
+2022-03-01 23:19:14,631 INFO    HandlerThread:3754 [handler.py:handle_request_defer():154] handle defer: 5
+2022-03-01 23:19:14,632 DEBUG   SenderThread:3754 [sender.py:send_request():249] send_request: defer
+2022-03-01 23:19:14,632 INFO    SenderThread:3754 [sender.py:send_request_defer():388] handle sender defer: 5
+2022-03-01 23:19:14,632 INFO    SenderThread:3754 [dir_watcher.py:finish():283] shutting down directory watcher
+2022-03-01 23:19:14,734 DEBUG   HandlerThread:3754 [handler.py:handle_request():131] handle_request: poll_exit
+2022-03-01 23:19:14,766 INFO    SenderThread:3754 [dir_watcher.py:_on_file_modified():230] file/dir modified: /opt/ml/code/git_bcnlp/special_mission/hyunah/wandb/run-20220301_222159-3kaz76g8/files/config.yaml
+2022-03-01 23:19:14,766 INFO    SenderThread:3754 [dir_watcher.py:_on_file_modified():230] file/dir modified: /opt/ml/code/git_bcnlp/special_mission/hyunah/wandb/run-20220301_222159-3kaz76g8/files/wandb-summary.json
+2022-03-01 23:19:14,766 INFO    SenderThread:3754 [dir_watcher.py:_on_file_modified():230] file/dir modified: /opt/ml/code/git_bcnlp/special_mission/hyunah/wandb/run-20220301_222159-3kaz76g8/files/output.log
+2022-03-01 23:19:14,766 INFO    SenderThread:3754 [dir_watcher.py:finish():313] scan: /opt/ml/code/git_bcnlp/special_mission/hyunah/wandb/run-20220301_222159-3kaz76g8/files
+2022-03-01 23:19:14,766 INFO    SenderThread:3754 [dir_watcher.py:finish():327] scan save: /opt/ml/code/git_bcnlp/special_mission/hyunah/wandb/run-20220301_222159-3kaz76g8/files/wandb-metadata.json wandb-metadata.json
+2022-03-01 23:19:14,767 INFO    SenderThread:3754 [dir_watcher.py:finish():327] scan save: /opt/ml/code/git_bcnlp/special_mission/hyunah/wandb/run-20220301_222159-3kaz76g8/files/requirements.txt requirements.txt
+2022-03-01 23:19:14,767 INFO    SenderThread:3754 [dir_watcher.py:finish():327] scan save: /opt/ml/code/git_bcnlp/special_mission/hyunah/wandb/run-20220301_222159-3kaz76g8/files/output.log output.log
+2022-03-01 23:19:14,767 INFO    SenderThread:3754 [dir_watcher.py:finish():327] scan save: /opt/ml/code/git_bcnlp/special_mission/hyunah/wandb/run-20220301_222159-3kaz76g8/files/wandb-summary.json wandb-summary.json
+2022-03-01 23:19:14,767 INFO    SenderThread:3754 [dir_watcher.py:finish():327] scan save: /opt/ml/code/git_bcnlp/special_mission/hyunah/wandb/run-20220301_222159-3kaz76g8/files/conda-environment.yaml conda-environment.yaml
+2022-03-01 23:19:14,773 INFO    SenderThread:3754 [dir_watcher.py:finish():327] scan save: /opt/ml/code/git_bcnlp/special_mission/hyunah/wandb/run-20220301_222159-3kaz76g8/files/config.yaml config.yaml
+2022-03-01 23:19:14,774 INFO    SenderThread:3754 [sender.py:transition_state():392] send defer: 6
+2022-03-01 23:19:14,774 DEBUG   SenderThread:3754 [sender.py:send_request():249] send_request: poll_exit
+2022-03-01 23:19:14,775 DEBUG   HandlerThread:3754 [handler.py:handle_request():131] handle_request: defer
+2022-03-01 23:19:14,775 INFO    HandlerThread:3754 [handler.py:handle_request_defer():154] handle defer: 6
+2022-03-01 23:19:14,778 DEBUG   SenderThread:3754 [sender.py:send_request():249] send_request: defer
+2022-03-01 23:19:14,782 INFO    SenderThread:3754 [sender.py:send_request_defer():388] handle sender defer: 6
+2022-03-01 23:19:14,782 INFO    SenderThread:3754 [file_pusher.py:finish():177] shutting down file pusher
+2022-03-01 23:19:14,877 DEBUG   HandlerThread:3754 [handler.py:handle_request():131] handle_request: poll_exit
+2022-03-01 23:19:14,877 DEBUG   SenderThread:3754 [sender.py:send_request():249] send_request: poll_exit
+2022-03-01 23:19:14,981 DEBUG   HandlerThread:3754 [handler.py:handle_request():131] handle_request: poll_exit
+2022-03-01 23:19:14,981 DEBUG   SenderThread:3754 [sender.py:send_request():249] send_request: poll_exit
+2022-03-01 23:19:15,083 DEBUG   HandlerThread:3754 [handler.py:handle_request():131] handle_request: poll_exit
+2022-03-01 23:19:15,084 DEBUG   SenderThread:3754 [sender.py:send_request():249] send_request: poll_exit
+2022-03-01 23:19:15,186 DEBUG   HandlerThread:3754 [handler.py:handle_request():131] handle_request: poll_exit
+2022-03-01 23:19:15,187 DEBUG   SenderThread:3754 [sender.py:send_request():249] send_request: poll_exit
+2022-03-01 23:19:15,289 DEBUG   HandlerThread:3754 [handler.py:handle_request():131] handle_request: poll_exit
+2022-03-01 23:19:15,289 DEBUG   SenderThread:3754 [sender.py:send_request():249] send_request: poll_exit
+2022-03-01 23:19:15,339 INFO    Thread-24 :3754 [upload_job.py:push():137] Uploaded file /opt/ml/code/git_bcnlp/special_mission/hyunah/wandb/run-20220301_222159-3kaz76g8/files/requirements.txt
+2022-03-01 23:19:15,346 INFO    Thread-27 :3754 [upload_job.py:push():137] Uploaded file /opt/ml/code/git_bcnlp/special_mission/hyunah/wandb/run-20220301_222159-3kaz76g8/files/config.yaml
+2022-03-01 23:19:15,370 INFO    Thread-26 :3754 [upload_job.py:push():137] Uploaded file /opt/ml/code/git_bcnlp/special_mission/hyunah/wandb/run-20220301_222159-3kaz76g8/files/wandb-summary.json
+2022-03-01 23:19:15,380 INFO    Thread-25 :3754 [upload_job.py:push():137] Uploaded file /opt/ml/code/git_bcnlp/special_mission/hyunah/wandb/run-20220301_222159-3kaz76g8/files/output.log
+2022-03-01 23:19:15,391 DEBUG   HandlerThread:3754 [handler.py:handle_request():131] handle_request: poll_exit
+2022-03-01 23:19:15,391 DEBUG   SenderThread:3754 [sender.py:send_request():249] send_request: poll_exit
+2022-03-01 23:19:15,493 DEBUG   HandlerThread:3754 [handler.py:handle_request():131] handle_request: poll_exit
+2022-03-01 23:19:15,494 DEBUG   SenderThread:3754 [sender.py:send_request():249] send_request: poll_exit
+2022-03-01 23:19:15,581 INFO    Thread-7  :3754 [sender.py:transition_state():392] send defer: 7
+2022-03-01 23:19:15,582 DEBUG   HandlerThread:3754 [handler.py:handle_request():131] handle_request: defer
+2022-03-01 23:19:15,582 INFO    HandlerThread:3754 [handler.py:handle_request_defer():154] handle defer: 7
+2022-03-01 23:19:15,582 DEBUG   SenderThread:3754 [sender.py:send_request():249] send_request: defer
+2022-03-01 23:19:15,582 INFO    SenderThread:3754 [sender.py:send_request_defer():388] handle sender defer: 7
+2022-03-01 23:19:15,595 DEBUG   HandlerThread:3754 [handler.py:handle_request():131] handle_request: poll_exit
+2022-03-01 23:19:16,391 INFO    SenderThread:3754 [sender.py:transition_state():392] send defer: 8
+2022-03-01 23:19:16,392 DEBUG   SenderThread:3754 [sender.py:send_request():249] send_request: poll_exit
+2022-03-01 23:19:16,393 DEBUG   HandlerThread:3754 [handler.py:handle_request():131] handle_request: defer
+2022-03-01 23:19:16,393 INFO    HandlerThread:3754 [handler.py:handle_request_defer():154] handle defer: 8
+2022-03-01 23:19:16,393 DEBUG   SenderThread:3754 [sender.py:send_request():249] send_request: defer
+2022-03-01 23:19:16,393 INFO    SenderThread:3754 [sender.py:send_request_defer():388] handle sender defer: 8
+2022-03-01 23:19:16,393 INFO    SenderThread:3754 [sender.py:transition_state():392] send defer: 9
+2022-03-01 23:19:16,394 DEBUG   SenderThread:3754 [sender.py:send():235] send: final
+2022-03-01 23:19:16,394 DEBUG   SenderThread:3754 [sender.py:send():235] send: footer
+2022-03-01 23:19:16,394 DEBUG   HandlerThread:3754 [handler.py:handle_request():131] handle_request: defer
+2022-03-01 23:19:16,395 INFO    HandlerThread:3754 [handler.py:handle_request_defer():154] handle defer: 9
+2022-03-01 23:19:16,395 DEBUG   SenderThread:3754 [sender.py:send_request():249] send_request: defer
+2022-03-01 23:19:16,395 INFO    SenderThread:3754 [sender.py:send_request_defer():388] handle sender defer: 9
+2022-03-01 23:19:17,651 WARNING MainThread:3754 [internal.py:is_dead():380] Internal process exiting, parent pid 3715 disappeared
+2022-03-01 23:19:17,651 ERROR   MainThread:3754 [internal.py:wandb_internal():148] Internal process shutdown.
+2022-03-01 23:19:18,395 INFO    WriterThread:3754 [datastore.py:close():281] close: /opt/ml/code/git_bcnlp/special_mission/hyunah/wandb/run-20220301_222159-3kaz76g8/run-3kaz76g8.wandb
+2022-03-01 23:19:18,395 INFO    SenderThread:3754 [sender.py:finish():1075] shutting down sender
+2022-03-01 23:19:18,395 INFO    SenderThread:3754 [file_pusher.py:finish():177] shutting down file pusher
+2022-03-01 23:19:18,395 INFO    SenderThread:3754 [file_pusher.py:join():182] waiting for file pusher
+2022-03-01 23:19:18,397 INFO    HandlerThread:3754 [handler.py:finish():739] shutting down handler
+2022-03-01 23:19:18,398 INFO    MainThread:3754 [internal.py:handle_exit():79] Internal process exited

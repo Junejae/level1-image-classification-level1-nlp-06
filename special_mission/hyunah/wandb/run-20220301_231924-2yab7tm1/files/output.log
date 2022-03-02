@@ -1,0 +1,16 @@
+
+F1 Loss: 0.5343 | Accuracy: 0.7587
+F1 Loss: 0.6193 | Accuracy: 0.7778
+F1 Loss: 0.6285 | Accuracy: 0.7857
+F1 Loss: 0.6589 | Accuracy: 0.8222
+F1 Loss: 0.7071 | Accuracy: 0.8206
+Early Stopping...
+F1 Loss: 0.8181 | Accuracy: 0.8976
+Early Stopping...
+F1 Loss: 0.7530 | Accuracy: 0.8892
+Early Stopping...
+F1 Loss: 0.8378 | Accuracy: 0.9119
+Early Stopping...
+F1 Loss: 0.7519 | Accuracy: 0.8132
+Early Stopping...
+test inference is done!

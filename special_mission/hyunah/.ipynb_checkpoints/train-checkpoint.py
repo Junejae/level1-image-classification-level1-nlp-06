@@ -120,7 +120,7 @@ def k_fold_train(k, dataset, model, loss_fn, criterion_fn, optm, BATCH_SIZE, EPO
 
 
 
-def train(data_loader, model, loss_fn, optm, EPOCH, is_wandb_logging=False):
+def train(data_loader, model, loss_fn, optm, EPOCH, is_wandb_logging=False, patience=10):
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     
     ## Train process
@@ -133,20 +133,23 @@ def train(data_loader, model, loss_fn, optm, EPOCH, is_wandb_logging=False):
             imgs = Variable(imgs).to(device)
             labels = Variable(labels).to(device)
 
-            y_pred = model(imgs)
-            loss = loss_fn(y_pred, labels)
-            targets.extend(labels.cpu().numpy())
-            all_preds.extend(y_pred.argmax(dim=-1).detach().cpu().numpy())
+            outs = model(imgs)
+            preds = torch.argmax(outs, dim=-1)
+            loss = loss_fn(outs, labels)
             
-            optm.zero_grad()
             loss.backward()
             optm.step()
+            optm.zero_grad()
 
+            targets.extend(labels.cpu().numpy())
+            all_preds.extend(preds.detach().cpu().numpy())
+            
 #             if i % len(data_loader) == 0:
-        print("epoch: {} | Loss: {:.4f} | Acc: {:.4f}".format(epoch, loss.data, accuracy_score(targets, all_preds)))
+        acc = accuracy_score(targets, all_preds)
+        print("epoch: {} | Loss: {:.4f} | Acc: {:.4f}".format(epoch, np.mean(f1_score(targets, all_preds, average=None)), acc))
         
         if is_wandb_logging:
-            wandb.log({"loss": loss.data, "accuracy": accuracy_score(targets, all_preds)})
+            wandb.log({"loss": f1_score(targets, all_preds, average=None), "accuracy": acc})
     print('done!')
     
     
