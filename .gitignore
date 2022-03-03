@@ -3,3 +3,4 @@
 *.json
 **/hyunjin/model/
 **/hyunjin/wandb/
+**/hyunjin/__pycache__
