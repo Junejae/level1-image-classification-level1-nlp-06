@@ -1,5 +1,5 @@
 *.pth
 *.csv
 *.json
-**/special_mission/hyunjin/model/
-**/special_mission/hyunjin/wandb/
+**/hyunjin/model/
+**/hyunjin/wandb/
