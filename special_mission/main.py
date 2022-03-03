@@ -62,125 +62,95 @@ def grid_image(np_images, gts, preds, n=16, shuffle=False):
 
     return figure
 
-def train(data_dir, model_dir, args):
-
-
-    dataset.set_transform(transform)
-
-    #train_set, val_set = dataset.split_dataset()
-    
-    train_loader = torch.utils.data.DataLoader(dataset=train_set,
-                                                    batch_size=args.batch_size,
-                                                    shuffle=True)
-    val_loader = torch.utils.data.DataLoader(dataset=val_set,
-                                                    batch_size=args.batch_size,
-                                                    shuffle=True)
-
-
-    
-    
-    #criterion = nn.CrossEntropyLoss()
-    criterion = LabelSmoothingLoss()
-    optimizer = torch.optim.Adam(model.parameters(), lr=args.initial_lr)
-    #scheduler = StepLR(optimizer, step_size=1, gamma=0.5)
-
-    # -- logging
-    logger = SummaryWriter(log_dir=save_dir)
-    with open(os.path.join(save_dir, 'config.json'), 'w', encoding='utf-8') as f:
-        json.dump(vars(args), f, ensure_ascii=False, indent=4)
-
-    best_val_acc = 0
-    best_val_loss = np.inf
-    for epoch in range(args.epochs):
-        # train loop
-        model.train()
-        loss_value = 0
-        matches = 0
-
-        for idx, train_batch in enumerate(train_loader):
-            inputs, labels = train_batch
+def valid(val_loader, args, logger, best_val_acc, best_val_loss):
+    # val loop
+    with torch.no_grad():
+        print("Calculating validation results...")
+        model.eval()
+        val_loss_items = []
+        val_acc_items = []
+        figure = None
+        for val_batch in val_loader:
+            inputs, labels = val_batch
             inputs = inputs.to(device)
             labels = labels.to(device)
 
-            optimizer.zero_grad()
-
             outs = model(inputs)
             preds = torch.argmax(outs, dim=-1)
-            loss = criterion(outs, labels)
 
-            loss.backward()
-            optimizer.step()
+            loss_item = criterion(outs, labels).item()
+            acc_item = (labels == preds).sum().item()
+            val_loss_items.append(loss_item)
+            val_acc_items.append(acc_item)
 
-            loss_value += loss.item()
-            matches += (preds == labels).sum().item()
-            if (idx + 1) % args.log_interval == 0:
-                train_loss = loss_value / args.log_interval
-                train_acc = matches / args.batch_size / args.log_interval
-                current_lr = get_lr(optimizer)
-                print(
-                    f"Epoch[{epoch}/{args.epochs}]({idx + 1}/{len(train_loader)}) || "
-                    f"training loss {train_loss:4.4} || training accuracy {train_acc:4.2%} || lr {current_lr}"
+            if figure is None:
+                inputs_np = torch.clone(inputs).detach().cpu().permute(0, 2, 3, 1).numpy()
+                inputs_np = dataset.denormalize_image(inputs_np, dataset.mean, dataset.std)
+                figure = grid_image(
+                    inputs_np, labels, preds, n=16, shuffle=args.dataset != "MaskSplitByProfileDataset"
                 )
-                logger.add_scalar("Train/loss", train_loss, epoch * len(train_loader) + idx)
-                logger.add_scalar("Train/accuracy", train_acc, epoch * len(train_loader) + idx)
-                
-                wandb.log({
-                    "Train Accuracy": train_acc,
-                    "Train Loss": train_loss})
-                
-                loss_value = 0
-                matches = 0
 
+        val_loss = np.sum(val_loss_items) / len(val_loader)
+        val_acc = np.sum(val_acc_items) / len(val_set)
+        best_val_loss = min(best_val_loss, val_loss)
+        if val_acc > best_val_acc:
+            print(f"New best model for val accuracy : {val_acc:4.2%}! saving the best model..")
+            torch.save(model.module.state_dict(), f"{save_dir}/best.pth")
+            best_val_acc = val_acc
+        torch.save(model.module.state_dict(), f"{save_dir}/last.pth")
+        print(
+            f"[Val] acc : {val_acc:4.2%}, loss: {val_loss:4.2} || "
+            f"best acc : {best_val_acc:4.2%}, best loss: {best_val_loss:4.2}"
+        )
+        logger.add_scalar("Val/loss", val_loss, epoch)
+        logger.add_scalar("Val/accuracy", val_acc, epoch)
+        logger.add_figure("results", figure, epoch)
+        
+        wandb.log({
+            "Val Accuracy": val_acc,
+            "Val Loss": val_loss,
+            "results": figure})
+    
+    return best_val_acc, best_val_loss
+        
+def train(train_loader, args, logger, epoch):
+    # train loop
+    model.train()
+    loss_value = 0
+    matches = 0
 
-        # val loop
-        with torch.no_grad():
-            print("Calculating validation results...")
-            model.eval()
-            val_loss_items = []
-            val_acc_items = []
-            figure = None
-            for val_batch in val_loader:
-                inputs, labels = val_batch
-                inputs = inputs.to(device)
-                labels = labels.to(device)
+    for idx, train_batch in enumerate(train_loader):
+        inputs, labels = train_batch
+        inputs = inputs.to(device)
+        labels = labels.to(device)
 
-                outs = model(inputs)
-                preds = torch.argmax(outs, dim=-1)
+        optimizer.zero_grad()
 
-                loss_item = criterion(outs, labels).item()
-                acc_item = (labels == preds).sum().item()
-                val_loss_items.append(loss_item)
-                val_acc_items.append(acc_item)
+        outs = model(inputs)
+        preds = torch.argmax(outs, dim=-1)
+        loss = criterion(outs, labels)
 
-                if figure is None:
-                    inputs_np = torch.clone(inputs).detach().cpu().permute(0, 2, 3, 1).numpy()
-                    inputs_np = dataset.denormalize_image(inputs_np, dataset.mean, dataset.std)
-                    figure = grid_image(
-                        inputs_np, labels, preds, n=16, shuffle=args.dataset != "MaskSplitByProfileDataset"
-                    )
+        loss.backward()
+        optimizer.step()
 
-            val_loss = np.sum(val_loss_items) / len(val_loader)
-            val_acc = np.sum(val_acc_items) / len(val_set)
-            best_val_loss = min(best_val_loss, val_loss)
-            if val_acc > best_val_acc:
-                print(f"New best model for val accuracy : {val_acc:4.2%}! saving the best model..")
-                torch.save(model.module.state_dict(), f"{save_dir}/best.pth")
-                best_val_acc = val_acc
-            torch.save(model.module.state_dict(), f"{save_dir}/last.pth")
+        loss_value += loss.item()
+        matches += (preds == labels).sum().item()
+        if (idx + 1) % args.log_interval == 0:
+            train_loss = loss_value / args.log_interval
+            train_acc = matches / args.batch_size / args.log_interval
+            current_lr = get_lr(optimizer)
             print(
-                f"[Val] acc : {val_acc:4.2%}, loss: {val_loss:4.2} || "
-                f"best acc : {best_val_acc:4.2%}, best loss: {best_val_loss:4.2}"
+                f"Epoch[{epoch}/{args.epochs}]({idx + 1}/{len(train_loader)}) || "
+                f"training loss {train_loss:4.4} || training accuracy {train_acc:4.2%} || lr {current_lr}"
             )
-            logger.add_scalar("Val/loss", val_loss, epoch)
-            logger.add_scalar("Val/accuracy", val_acc, epoch)
-            logger.add_figure("results", figure, epoch)
+            logger.add_scalar("Train/loss", train_loss, epoch * len(train_loader) + idx)
+            logger.add_scalar("Train/accuracy", train_acc, epoch * len(train_loader) + idx)
             
             wandb.log({
-                "Val Accuracy": val_acc,
-                "Val Loss": val_loss,
-                "results": figure})
-                            
-            print()
+                "Train Accuracy": train_acc,
+                "Train Loss": train_loss})
+                                    
+
 
 
 if __name__ == "__main__":
@@ -201,7 +171,8 @@ if __name__ == "__main__":
     parser.add_argument('--initial_lr', type=float, default=0.00001)
     parser.add_argument("--resize", nargs="+", type=list, default=[384, 288])
     parser.add_argument('--dataset', type=str, default='MaskBaseDataset', help='dataset augmentation type (default: MaskBaseDataset)')
-    
+    parser.add_argument('--folds', type=int, default=5)
+    parser.add_argument('--cross_valid', type=bool, default=False)
     args = parser.parse_args()
     
     wandb.init(project="hyunjin-project", entity="boostcamp-nlp06", name="resnet50+xavier+stepLR", config={
@@ -228,6 +199,8 @@ if __name__ == "__main__":
                                           mean=dataset.mean,
                                           std=dataset.std,)
     
+    dataset.set_transform(transform)
+    
     
     # -- model
     model = MyEnsemble()
@@ -235,9 +208,49 @@ if __name__ == "__main__":
     if device == "cuda":
         model = torch.nn.DataParallel(model)
     wandb.watch(model)
-    train(data_dir, model_dir, args)
     
+    criterion = LabelSmoothingLoss()
+    optimizer = torch.optim.Adam(model.parameters(), lr=args.initial_lr)
+    
+    # -- logging
+    logger = SummaryWriter(log_dir=save_dir)
+    with open(os.path.join(save_dir, 'config.json'), 'w', encoding='utf-8') as f:
+        json.dump(vars(args), f, ensure_ascii=False, indent=4)
+        
+    best_val_acc = 0
+    best_val_loss = np.inf
+    
+    if args.cross_valid == True:
+        kfold=KFold(n_splits=args.folds,shuffle=True)
+        
+        for fold,(train_idx,test_idx) in enumerate(kfold.split(dataset)):
+            print('------------fold no.{}----------------------'.format(fold))
+            train_subsampler = torch.utils.data.SubsetRandomSampler(train_idx)
+            test_subsampler = torch.utils.data.SubsetRandomSampler(test_idx)
 
+            train_loader = torch.utils.data.DataLoader(
+                                dataset, 
+                                batch_size=args.batch_size, sampler=train_subsampler)
+            val_loader = torch.utils.data.DataLoader(
+                                dataset,
+                                batch_size=args.batch_size, sampler=test_subsampler)
+
+
+            for epoch in range(args.epochs):
+                train(train_loader, args, logger, epoch)
+                best_val_acc, best_val_loss = valid(val_loader, args, logger, best_val_acc, best_val_loss)
+    else:
+        train_set, val_set = dataset.split_dataset()
+        train_loader = torch.utils.data.DataLoader(dataset=train_set,
+                                                    batch_size=args.batch_size,
+                                                    shuffle=True)
+        val_loader = torch.utils.data.DataLoader(dataset=val_set,
+                                                    batch_size=args.batch_size,
+                                                    shuffle=True)
+        for epoch in range(args.epochs):
+            train(train_loader, args, logger, epoch)
+            best_val_acc, best_val_loss = valid(val_loader, args, logger, best_val_acc, best_val_loss)
+    
         
     print('done!')
     
