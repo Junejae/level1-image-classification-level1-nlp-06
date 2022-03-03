@@ -1,5 +1,5 @@
 *.pth
 *.csv
 *.json
-/opt/ml/code/level1-image-classification-level1-nlp-6/special_mission/hyunjin/model/
-/opt/ml/code/level1-image-classification-level1-nlp-6/special_mission/hyunjin/wandb/
+**/special_mission/hyunjin/model/
+**/special_mission/hyunjin/wandb/
