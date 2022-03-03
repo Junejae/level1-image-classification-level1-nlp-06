@@ -62,7 +62,7 @@ def grid_image(np_images, gts, preds, n=16, shuffle=False):
 
     return figure
 
-def valid(val_loader, args, logger, best_val_acc, best_val_loss):
+def valid(val_loader, args, logger, best_val_acc, best_val_loss, val_set):
     # val loop
     with torch.no_grad():
         print("Calculating validation results...")
@@ -238,7 +238,7 @@ if __name__ == "__main__":
 
             for epoch in range(args.epochs):
                 train(train_loader, args, logger, epoch)
-                best_val_acc, best_val_loss = valid(val_loader, args, logger, best_val_acc, best_val_loss)
+                best_val_acc, best_val_loss = valid(val_loader, args, logger, best_val_acc, best_val_loss, test_idx)
     else:
         train_set, val_set = dataset.split_dataset()
         train_loader = torch.utils.data.DataLoader(dataset=train_set,
@@ -249,7 +249,7 @@ if __name__ == "__main__":
                                                     shuffle=True)
         for epoch in range(args.epochs):
             train(train_loader, args, logger, epoch)
-            best_val_acc, best_val_loss = valid(val_loader, args, logger, best_val_acc, best_val_loss)
+            best_val_acc, best_val_loss = valid(val_loader, args, logger, best_val_acc, best_val_loss, val_set)
     
         
     print('done!')
