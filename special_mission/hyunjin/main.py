@@ -62,6 +62,103 @@ def grid_image(np_images, gts, preds, n=16, shuffle=False):
 
     return figure
 
+def split_train(train_loader, args, logger, epoch):
+    # train loop
+    model.train()
+    age_loss_value = 0
+    age_matches = 0
+    gender_loss_value = 0
+    gender_matches = 0
+    mask_loss_value = 0
+    mask_matches = 0
+ 
+    for idx, train_batch in enumerate(train_loader):
+        inputs, labels, gender_label, age_label, mask_label = train_batch
+        inputs = inputs.to(device)
+        labels = labels.to(device)
+        gender_label = gender_label.to(device)
+        age_label = age_label.to(device)
+        mask_label = mask_label.to(device)
+
+        # age
+        age_optimizer.zero_grad()
+
+        age_outs = agemodel(inputs)
+        age_preds = torch.argmax(age_outs, dim=-1)
+        age_loss = age_criterion(age_preds, age_label)
+
+        age_loss.backward()
+        age_optimizer.step()
+
+        # gender
+        gender_optimizer.zero_grad()
+
+        gender_outs = gendermodel(inputs)
+        gender_preds = torch.argmax(gender_outs, dim=-1)
+        gender_loss = gender_criterion(gender_preds, gender_label)
+
+        gender_loss.backward()
+        gender_optimizer.step()
+        
+        
+        # mask
+        mask_optimizer.zero_grad()
+
+        mask_outs = maskmodel(inputs)
+        mask_preds = torch.argmax(mask_outs, dim=-1)
+        mask_loss = gender_criterion(mask_preds, mask_label)
+
+        mask_loss.backward()
+        mask_optimizer.step()
+        
+        
+        age_loss_value += age_loss.item()
+        age_matches += (age_preds == age_label).sum().item()
+        
+        gender_loss_value += age_loss.item()
+        gender_matches += (age_preds == gender_label).sum().item()
+        
+        mask_loss_value += mask_loss.item()
+        mask_matches += (mask_preds == mask_label).sum().item()
+        
+        if (idx + 1) % args.log_interval == 0:
+            age_train_loss = age_loss_value / args.log_interval
+            age_train_acc = age_matches / args.batch_size / args.log_interval
+            
+            gender_train_loss = gender_loss_value / args.log_interval
+            gender_train_acc = gender_matches / args.batch_size / args.log_interval
+            
+            mask_train_loss = mask_loss_value / args.log_interval
+            mask_train_acc = mask_matches / args.batch_size / args.log_interval
+
+            print(
+                f"Epoch[{epoch}/{args.epochs}]({idx + 1}/{len(train_loader)}) || "
+                f"age training loss {age_train_loss:4.4} || training accuracy {age_train_acc:4.2%} || "
+                f"gender training loss {gender_train_loss:4.4} || training accuracy {gender_train_acc:4.2%} || "
+                f"mask training loss {mask_train_loss:4.4} || training accuracy {mask_train_acc:4.2%} || "
+            )
+
+            
+            wandb.log({
+                "age Train Accuracy": age_train_acc,
+                "age Train Loss": age_train_loss,
+                "gender Train Accuracy": gender_train_loss,
+                "gender  Train Loss": gender_train_loss,
+                "mask Train Accuracy": mask_train_loss,
+                "mask  Train Loss": mask_train_loss
+                })
+                                    
+            age_loss_value = 0
+            age_matches = 0
+            gender_loss_value = 0
+            gender_matches = 0
+            mask_loss_value = 0
+            mask_matches = 0
+            torch.save(model.module.state_dict(), f"{save_dir}/{epoch}_last.pth")
+
+
+
+
 def valid(val_loader, args, logger, best_val_acc, best_val_loss, val_set):
     # val loop
     with torch.no_grad():
@@ -120,9 +217,12 @@ def train(train_loader, args, logger, epoch):
     matches = 0
 
     for idx, train_batch in enumerate(train_loader):
-        inputs, labels = train_batch
+        inputs, labels, gender_label, age_label, mask_label = train_batch
         inputs = inputs.to(device)
         labels = labels.to(device)
+        gender_label = gender_label.to(device)
+        age_label = age_label.to(device)
+        mask_label = mask_label.to(device)
 
         optimizer.zero_grad()
 
@@ -150,7 +250,8 @@ def train(train_loader, args, logger, epoch):
                 "Train Accuracy": train_acc,
                 "Train Loss": train_loss})
                                     
-
+            loss_value = 0
+            matches = 0
 
 
 if __name__ == "__main__":
@@ -172,7 +273,7 @@ if __name__ == "__main__":
     parser.add_argument("--resize", nargs="+", type=list, default=[384, 288])
     parser.add_argument('--dataset', type=str, default='MaskBaseDataset', help='dataset augmentation type (default: MaskBaseDataset)')
     parser.add_argument('--folds', type=int, default=5)
-    parser.add_argument('--cross_valid', type=bool, default=False)
+    parser.add_argument('--cross_valid', type=str, default="normal")
     args = parser.parse_args()
     
     wandb.init(project="hyunjin-project", entity="boostcamp-nlp06", name="resnet50+xavier+stepLR", config={
@@ -194,23 +295,10 @@ if __name__ == "__main__":
     """
     Data Load & Preprocess
     """
-    dataset = MaskSplitByProfileDataset(data_dir)
-    transform = CustomAugmentation(resize=args.resize,
-                                          mean=dataset.mean,
-                                          std=dataset.std,)
-    
-    dataset.set_transform(transform)
+
     
     
-    # -- model
-    model = MyEnsemble()
-    model = model.to(args.device)
-    if device == "cuda":
-        model = torch.nn.DataParallel(model)
-    wandb.watch(model)
-    
-    criterion = LabelSmoothingLoss()
-    optimizer = torch.optim.Adam(model.parameters(), lr=args.initial_lr)
+
     
     # -- logging
     logger = SummaryWriter(log_dir=save_dir)
@@ -220,7 +308,23 @@ if __name__ == "__main__":
     best_val_acc = 0
     best_val_loss = np.inf
     
-    if args.cross_valid == True:
+    if args.cross_valid == "kfold":
+        # -- model
+        model = MyEnsemble()
+        model = model.to(args.device)
+        if device == "cuda":
+            model = torch.nn.DataParallel(model)
+        wandb.watch(model)
+        
+        criterion = LabelSmoothingLoss()
+        optimizer = torch.optim.Adam(model.parameters(), lr=args.initial_lr)
+    
+        dataset = MaskSplitByProfileDataset(data_dir)
+        transform = CustomAugmentation(resize=args.resize,
+                                          mean=dataset.mean,
+                                          std=dataset.std,)
+    
+        dataset.set_transform(transform)
         kfold=KFold(n_splits=args.folds,shuffle=True)
         
         for fold,(train_idx,test_idx) in enumerate(kfold.split(dataset)):
@@ -239,7 +343,24 @@ if __name__ == "__main__":
             for epoch in range(args.epochs):
                 train(train_loader, args, logger, epoch)
                 best_val_acc, best_val_loss = valid(val_loader, args, logger, best_val_acc, best_val_loss, test_idx)
-    else:
+    elif args.cross_valid == "normal":
+        # -- model
+        model = MyEnsemble()
+        model = model.to(args.device)
+        if device == "cuda":
+            model = torch.nn.DataParallel(model)
+        wandb.watch(model)
+        
+        criterion = LabelSmoothingLoss()
+        optimizer = torch.optim.Adam(model.parameters(), lr=args.initial_lr)
+    
+        dataset = MaskSplitByProfileDataset(data_dir)
+        transform = CustomAugmentation(resize=args.resize,
+                                        mean=dataset.mean,
+                                        std=dataset.std,)
+    
+        dataset.set_transform(transform)
+
         train_set, val_set = dataset.split_dataset()
         train_loader = torch.utils.data.DataLoader(dataset=train_set,
                                                     batch_size=args.batch_size,
@@ -251,6 +372,51 @@ if __name__ == "__main__":
             train(train_loader, args, logger, epoch)
             best_val_acc, best_val_loss = valid(val_loader, args, logger, best_val_acc, best_val_loss, val_set)
     
+    elif args.cross_valid == 'split':
+    
+        dataset = SplitedProfileDataset(data_dir)
+        transform = CustomAugmentation(resize=args.resize,
+                                          mean=dataset.mean,
+                                          std=dataset.std,)
+    
+        dataset.set_transform(transform)
+        #train_set, val_set = dataset.split_dataset()
+        train_loader = torch.utils.data.DataLoader(dataset=dataset,
+                                                    batch_size=args.batch_size,
+                                                    shuffle=True)
+        #val_loader = torch.utils.data.DataLoader(dataset=val_set,
+                                                    #batch_size=args.batch_size,
+                                                    #shuffle=True)
+        
+        
+        # -- model
+        agemodel = Resnet(num_classes=3)
+        agemodel = agemodel.to(args.device)
+        if device == "cuda":
+            agemodel = torch.nn.DataParallel(agemodel)
+            
+        age_criterion = LabelSmoothingLoss()
+        age_optimizer = torch.optim.Adam(agemodel.parameters(), lr=args.initial_lr) 
+        
+        gendermodel = Resnet(num_classes=2)
+        gendermodel = gendermodel.to(args.device)
+        if device == "cuda":
+            gendermodel = torch.nn.DataParallel(gendermodel)
+            
+        gender_criterion = LabelSmoothingLoss()
+        gender_optimizer = torch.optim.Adam(gendermodel.parameters(), lr=args.initial_lr) 
+        
+        maskmodel = Resnet(num_classes=3)
+        maskmodel = maskmodel.to(args.device)
+        if device == "cuda":
+            maskmodel = torch.nn.DataParallel(maskmodel)
+            
+        mask_criterion = LabelSmoothingLoss()
+        mask_optimizer = torch.optim.Adam(maskmodel.parameters(), lr=args.initial_lr)   
+            
+        for epoch in range(args.epochs):
+            split_train(train_loader, args, logger, epoch)
+            #best_val_acc, best_val_loss = split_valid(val_loader, args, logger, best_val_acc, best_val_loss, val_set)
         
     print('done!')
     

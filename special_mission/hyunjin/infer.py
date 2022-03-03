@@ -45,7 +45,7 @@ if __name__ == "__main__":
     parser.add_argument('--device', type=str, default='cuda')
     # Container environment
     parser.add_argument('--data_dir', type=str, default=os.environ.get('SM_CHANNEL_EVAL', '/opt/ml/input/data/eval'))
-    parser.add_argument('--model_dir', type=str, default=os.environ.get('SM_CHANNEL_MODEL', './model'))
+    parser.add_argument('--model_dir', type=str, default=os.environ.get('SM_CHANNEL_MODEL', '../model'))
     parser.add_argument('--output_dir', type=str, default=os.environ.get('SM_OUTPUT_DATA_DIR', './output'))
     parser.add_argument('--model_name', type=str)
 
@@ -62,6 +62,7 @@ if __name__ == "__main__":
     
     num_classes = MaskBaseDataset.num_classes  # 18
     model_path = os.path.join(args.model_dir, args.model_name, 'best.pth')
+    print(model_path)
     model = MyEnsemble()
     model.load_state_dict(torch.load(model_path, map_location=device))
     model.to(device)
