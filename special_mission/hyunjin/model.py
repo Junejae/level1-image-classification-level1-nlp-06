@@ -11,7 +11,7 @@ class Resnet(nn.Module):
         self.num_classes = num_classes
         self.resnet50 = models.resnet18(pretrained=True)
         self.resnet50.fc = nn.Sequential(
-                nn.Linear(in_features=2048, out_features=2048, bias=True),
+                nn.Linear(in_features=512, out_features=2048, bias=True),
                 nn.ReLU(),
                 nn.Dropout(0.5),
                 nn.Linear(in_features=2048, out_features=num_classes, bias=True))
