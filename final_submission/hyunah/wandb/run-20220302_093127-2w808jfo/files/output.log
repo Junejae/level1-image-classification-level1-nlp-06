@@ -1,0 +1,16 @@
+
+epoch: 0 | Loss: 0.6205 | Acc: 0.7822
+epoch: 1 | Loss: 0.8135 | Acc: 0.9130
+epoch: 2 | Loss: 0.8769 | Acc: 0.9423
+epoch: 3 | Loss: 0.9111 | Acc: 0.9632
+epoch: 4 | Loss: 0.9466 | Acc: 0.9751
+epoch: 5 | Loss: 0.9602 | Acc: 0.9809
+epoch: 6 | Loss: 0.9625 | Acc: 0.9810
+epoch: 7 | Loss: 0.9679 | Acc: 0.9833
+epoch: 8 | Loss: 0.9723 | Acc: 0.9864
+epoch: 9 | Loss: 0.9770 | Acc: 0.9876
+epoch: 10 | Loss: 0.9743 | Acc: 0.9858
+epoch: 11 | Loss: 0.9792 | Acc: 0.9899
+epoch: 12 | Loss: 0.9779 | Acc: 0.9893
+epoch: 13 | Loss: 0.9865 | Acc: 0.9908
+epoch: 14 | Loss: 0.9849 | Acc: 0.9928
