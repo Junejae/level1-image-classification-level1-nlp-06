@@ -21,106 +21,7 @@ from sklearn.model_selection import StratifiedKFold
 
 from dataset import MaskBaseDataset, AgeLabels, GenderLabels
 from loss import create_criterion
-
-
-def seed_everything(seed):
-    torch.manual_seed(seed)
-    torch.cuda.manual_seed(seed)
-    torch.cuda.manual_seed_all(seed)  # if use multi-GPU
-    torch.backends.cudnn.deterministic = True
-    torch.backends.cudnn.benchmark = False
-    np.random.seed(seed)
-    random.seed(seed)
-
-
-def get_lr(optimizer):
-    for param_group in optimizer.param_groups:
-        return param_group['lr']
-
-
-def grid_image(np_images, gts, preds, n=16, shuffle=False):
-    batch_size = np_images.shape[0]
-    assert n <= batch_size
-
-    choices = random.choices(range(batch_size), k=n) if shuffle else list(range(n))
-    figure = plt.figure(figsize=(12, 18 + 2))  # cautions: hardcoded, 이미지 크기에 따라 figsize 를 조정해야 할 수 있습니다. T.T
-    plt.subplots_adjust(top=0.8)  # cautions: hardcoded, 이미지 크기에 따라 top 를 조정해야 할 수 있습니다. T.T
-    n_grid = int(np.ceil(n ** 0.5))
-    tasks = ["mask", "gender", "age"]
-    for idx, choice in enumerate(choices):
-        gt = gts[choice].item()
-        pred = preds[choice].item()
-        image = np_images[choice]
-        gt_decoded_labels = MaskBaseDataset.decode_multi_class(gt)
-        pred_decoded_labels = MaskBaseDataset.decode_multi_class(pred)
-        title = "\n".join([
-            f"{task} - gt: {gt_label}, pred: {pred_label}"
-            for gt_label, pred_label, task
-            in zip(gt_decoded_labels, pred_decoded_labels, tasks)
-        ])
-
-        plt.subplot(n_grid, n_grid, idx + 1, title=title)
-        plt.xticks([])
-        plt.yticks([])
-        plt.grid(False)
-        plt.imshow(image, cmap=plt.cm.binary)
-
-    return figure
-
-
-def increment_path(path, exist_ok=False):
-    """ Automatically increment path, i.e. runs/exp --> runs/exp0, runs/exp1 etc.
-
-    Args:
-        path (str or pathlib.Path): f"{model_dir}/{args.name}".
-        exist_ok (bool): whether increment path (increment if False).
-    """
-    path = Path(path)
-    if (path.exists() and exist_ok) or (not path.exists()):
-        return str(path)
-    else:
-        dirs = glob.glob(f"{path}*")
-        matches = [re.search(rf"%s(\d+)" % path.stem, d) for d in dirs]
-        i = [int(m.groups()[0]) for m in matches if m]
-        n = max(i) + 1 if i else 2
-        return f"{path}{n}"
-
-
-def getDataloader(dataset, train_idx, valid_idx, batch_size, num_workers):
-    # 인자로 전달받은 dataset에서 train_idx에 해당하는 Subset 추출
-    train_set = torch.utils.data.Subset(dataset,
-                                        indices=train_idx)
-    # 인자로 전달받은 dataset에서 valid_idx에 해당하는 Subset 추출
-    val_set   = torch.utils.data.Subset(dataset,
-                                        indices=valid_idx)
-    
-    # 추출된 Train Subset으로 DataLoader 생성
-    train_loader = torch.utils.data.DataLoader(
-        train_set,
-        batch_size=batch_size,
-        num_workers=num_workers,
-        drop_last=True,
-        shuffle=True
-    )
-    # 추출된 Valid Subset으로 DataLoader 생성
-    val_loader = torch.utils.data.DataLoader(
-        val_set,
-        batch_size=batch_size,
-        num_workers=num_workers,
-        drop_last=True,
-        shuffle=False
-    )
-    
-    # 생성한 DataLoader 반환
-    return train_loader, val_loader
-
-# def setup_data(data_dir ,profiles, **split_data):
-#     for phase, indices in split_data.items():
-#         for _idx in indices:
-#             profile = profiles[_idx]
-#             img_folder = os.path.join(data_dir, profile)
-            
-#             break
+from train import seed_everything, get_lr, grid_image, increment_path 
 
 
 def train(data_dir, model_dir, args):
@@ -153,7 +54,7 @@ def train(data_dir, model_dir, args):
     
     counter = 0
     patience = 55
-    n_splits = 10
+    n_splits = 5
     skf = StratifiedKFold(n_splits=n_splits)
     profiles = os.listdir(data_dir)
     profiles = [profile for profile in profiles if not profile.startswith(".")]
