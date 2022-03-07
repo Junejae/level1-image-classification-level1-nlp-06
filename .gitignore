@@ -1,4 +1,9 @@
+*.pth
+*.csv
+*.json
+**/model/
 *.ipynb_checkpoints
-**/__pycache__
+**/__pycache__/
 **/wandb/
-**/.idea
+**/.idea/
+
