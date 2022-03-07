@@ -1,6 +1,9 @@
 *.pth
 *.csv
 *.json
-**/hyunjin/model/
-**/hyunjin/wandb/
-**/hyunjin/__pycache__
+**/model/
+*.ipynb_checkpoints
+**/__pycache__/
+**/wandb/
+**/.idea/
+
