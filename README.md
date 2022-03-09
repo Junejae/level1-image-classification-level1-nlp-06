@@ -6,6 +6,7 @@
     - 카메라로 촬영한 사람 얼굴 이미지의 마스크 착용 여부를 판단하는 Task
     - 사람의 성별, 연령대, 마스크 착용 여부를 한꺼번에 추론하여 총 18개의 class로 판정
 
+<br/>
 
 ## 📝 프로젝트 설명
 
@@ -22,6 +23,7 @@
 
 ![f1_score_explain](images/f1_score.png)
 
+<br/>
 
 ## 🔥 Final Score
 
@@ -41,6 +43,7 @@
 
 - best top-5 모델의 결과에 대해 hard-voting 수행 ⇒ 최종 f1 score `0.7264 => 0.7107`   accuracy `78.5397 => 77.6349`
 
+<br/>
 
 ### 모델 평가 및 개선
 
@@ -52,17 +55,8 @@
     - Oversampling으로 클래스간 불균형을 줄이고, 확률적 Augmentation을 도입하여 overfitting 방지 → 의도는 좋았으나, 결과가 좋지 못했음
     - Ensemble 기법 중 Hard Voting을 사용 → F1 스코어 상승
 
-
-
-
-# 🖼 Wrap Up REPORT
-
-[[Notion] Wrap-Up-Report](https://hyunbool.notion.site/Wrap-Up-f90798f5110543a6a669a6f6b3ad3909)
-
-- 사용 데이터셋 구조도, EDA 등 결과 공유
-- 개인 회고 기록
-
-
+<br/>
+<br/>
 
 ## GitHub 폴더 및 프로젝트 구조
 
@@ -78,7 +72,7 @@
     - `inference.py` : 클래스 추론
     - `sample_submission.py` : EDA 등 실험
 
-
+<br/>
 
 ## 프로젝트 팀 구성 및 역할
 
@@ -87,6 +81,7 @@
 - 배현진: 프로젝트 개발(데이터, 앙상블 모델 실험), 실험 추적
 - 이강민: 프로젝트 개발 (모델 튜닝 및 실험, wandb 기본 셋팅)
 
+<br/>
 
 ## 활용 장비 및 재료(개발 환경, 협업 tool 등)
 
