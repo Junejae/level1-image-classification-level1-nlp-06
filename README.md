@@ -124,3 +124,68 @@
     - Slack: 일정 공유
     - Zoom: 회의 및 인사이트 공유
     - WandB: 실험 결과, Metric 정보 공유
+
+
+## 나는 내 학습목표를 달성하기 위해 무엇을 어떻게 했는가?
+
+### 우리 팀과 나의 학습목표는 무엇이었나?
+
+- 팀 학습 목표: 이번 대회는 주 관심사인 NLP와 거리가 다소 있는 CV 영역의 Image Classification이 주가 되는 대회였다. 따라서 팀 단위의 주요 목표를 Pytorch 기반 딥러닝 워크플로우에 적응하는 방향으로 잡아, 미래에 있을 NLP 대회에서의 협업과 능률 향상이 있을 것을 기대하였다.
+- 개인 학습 목표: 나는 과거에 Pytorch 기반 강화학습 구현 경험이 있었기에, 이번 대회에선 실험 과정의 간편화와, EDA 경험, Metric 시각화를 위한 WandB 적응을 목표로 하였다.
+
+### 개인 학습 측면
+
+- Jupyter Notebook 기반으로 간단하게 데이터셋 - 모델 - 학습 - 추론을 한꺼번에 구현하여 작동여부를 확인.
+- Python Project 기반으로 전환하여 실험 프로세스 적응
+- WandB 도입으로 Early Stopping 지점 확인 등의 기법 적용 난이도 간소화
+- EDA를 통한 Test셋과 Validation 셋의 완벽한 분리, Oversampling 기법 도입
+
+### 공동 학습 측면
+
+- 데일리 스크럼, 피어세션을 통해 팀원의 진척도 확인과 트러블슈팅 기여.
+- 과거 경험과 논리에 기반한 인사이트 제공으로 학습 방향 조정에 기여.
+
+## 나는 어떤 방식으로 모델을 개선했는가?
+
+### 사용한 지식과 기술
+
+- Pre-trained CNN 모델: Resnet18, Resnet50, EfficientNet, VGG16,Xavier Uniform으로 classifier layer 초기화
+- Optimizer: SGD, Adam, AdamW
+- Loss Function: Cross-Entropy, Focal Loss, F1 Loss
+- LR Scheduler: StepLR, CosineAnnealingWarmRestarts
+- Transfer Learning 기법: Fine-Tuning, Freezing
+- 데이터셋 재정립: Profile-based Separation, 클래스 불균형을 해결하기 위한 Oversampling
+- Augmentation: RandomRotation, RandomPerspective, RandomHirizontalFlip
+- Overfitting 방지: MLP-based Classification Layer에 Dropout rate 다변화, 배치 사이즈와 Learning Rate 조정, Optimizer 패러미터에 Weight Decay 부여, Mixup 시도
+- Metric: Accuracy, F1 Score
+- Ensemble: Soft Voting, Hard Voting, Test Time Augmentation
+
+## 내가 한 행동의 결과로 어떤 지점을 달성하고, 어떠한 깨달음을 얻었는가?
+
+- 아이러니하게도 가장 초기에 Jupyter Notebook으로 간단히 구현했던 모델이 마감 직전까지 팀 내 단일모델 기준 SOTA를 달성하였다.
+- 모델의 스펙보단, 집중해야 할 곳은 데이터의 퀄리티와 오버피팅 방지에 있었다는 깨달음이 있었다.
+
+## 전과 비교해서, 내가 새롭게 시도한 변화는 무엇이고, 어떤 효과가 있었는가?
+
+- 예전에 딥러닝 프로젝트를 할 때는 Metric 시각화 도구를 스스로 구현해서 로컬 창에 띄웠었다.
+    - 이번에는 빠르게 WandB를 도입하여 이런 부수적인 수고를 방지하고, 더 많은 실험을 할 수 있었다.
+- Python Project 베이스라인 코드로 비교적 빠르게 환경을 옮겼다.
+    - 커멘드라인에 Arguments를 넣어 실험변수를 확실히 통제하면서 능률을 올릴 수 있었다.
+- 그동안 로컬만 써 오다 서버 SSH 환경으로 빠르게 옮겼다.
+    - 서버에서 코딩과 실험을 모두 할 수 있어 능률을 올릴 수 있었다.
+
+## 마주한 한계는 무엇이며, 아쉬웠던 점은 무엇인가?
+
+- 대회에 알맞는 Metric 설정과, Metric 신뢰성을 확보하는 데 어려움이 있었다.
+- Albumentation 적용 실패로 Augmentation 최적화에 실패해 실험시간이 늘어진 것 같아 아쉽다.
+- Age, Gender, Mask 각각을 분류하는 개별모델을 만들어 Rule Base로 최종결정을 하는 방식을 초기에 반대했다. 세 모델의 정확도가 떨어지면 곱확률의 법칙으로 모델이 망할거란 논리를 폈었는데, 나중에 확인해보니 Gender와 Mask는 아주 간단한 모델로도 정확도 99%달성해서, Age 모델의 개선에만 집중하면 충분히 유효한 전략임이 드러났다. 아쉽다.
+- Pytorch 라이브러리와, 베이스라인 코드를 충분히 이해하지 않고 사용한 부분이 있다.
+- 좀 더 면밀히 EDA를 수행하지 못한 점이 아쉽다.
+- Pytorch Project 환경으로 바꿨음에도, 여러 변수를 모듈라이즈 하지 않고 하드코딩으로 바꾼 경우가 좀 있어서 아쉽다.
+
+## 한계/교훈을 바탕으로 다음 프로젝트에서 스스로 새롭게 시도해볼 것은 무엇일까?
+
+- 대회 초창기에 EDA와 간단한 모델을 통해 테스트 하면서 최대한 리더보드와 유사한 기준점이 되는 Metric을 확립하는 것.
+- 새로운 라이브러리, 환경을 사용하는 것에 일말의 주저함도 없을 것
+- 새로운 방법을 제안하거나 반대할 때, 논리 이외에도 실증을 통해서 증명할 것
+- 남의 함수를 쓰기 전에 라이브러리와 다른 사람의 코드를 보며 충분히 이해한 후 사용할 것
